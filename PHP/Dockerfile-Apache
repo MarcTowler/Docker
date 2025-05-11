@@ -1,1 +1,53 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
+
+ENV MY_USER="itslit" \
+    MY_GROUP="itslit" \
+    MY_UID="1000" \
+    MY_GID="1000" \
+    PHP_VERSION="8.2"
+
+RUN set -eux \
+    && groupadd -g ${MY_GID} -r ${MY_GROUP} \
+    && useradd -u ${MY_UID} -m -s /bin/bash -g ${MY_GROUP} ${MY_USER}
+
+RUN set -eux \
+    && DEBIAN_FRONTEND=noninteractive apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --no-install-suggests \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        dirmngr \
+        gnupg \
+        postfix \
+        postfix-pcre \
+        cron \
+        rsyslog \
+        socat \
+        supervisor \
+        file \
+		git \
+		mariadb-client \
+    && sed -i'' 's/.*imklog.*//g' /etc/rsyslog.conf \
+    && rm -rf /etc/supervisor* \
+    && mkdir -p /var/log/supervisor/conf.d \
+    && mkdir -p /etc/supervisor/custom.d \
+    && chown itslit:itslit /etc/supervisor/custom.d \
+    && (find /usr/local/bin  -type f -print0 | xargs -n1 -0 -P$(getconf _NPROCESSORS_ONLN) strip --strip-all -p 2>/dev/null || true) \
+	&& (find /usr/local/lib  -type f -print0 | xargs -n1 -0 -P$(getconf _NPROCESSORS_ONLN) strip --strip-all -p 2>/dev/null || true) \
+	&& (find /usr/local/sbin -type f -print0 | xargs -n1 -0 -P$(getconf _NPROCESSORS_ONLN) strip --strip-all -p 2>/dev/null || true)
+
+RUN set -eux \
+	&& DEBIAN_FRONTEND=noninteractive apt-get update \
+	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --no-install-suggests \
+		dnsutils \
+		iputils-ping \
+		netcat-openbsd \
+		sudo \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN set -eux \
+	&& COMPOSER_2_VERSION="latest-2.x" \
+	&& curl -sS -L --fail "https://getcomposer.org/download/${COMPOSER_2_VERSION}/composer.phar" > /usr/local/bin/composer-2 \
+	&& chmod +x /usr/local/bin/composer-2 \
+	&& ln -sf /usr/local/bin/composer-2 /usr/local/bin/composer \
+	&& true
