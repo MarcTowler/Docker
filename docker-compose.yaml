@@ -59,13 +59,66 @@ services:
       docker.for.lin.host.internal: 172.16.238.1
       docker.for.lin.localhost: 172.16.238.1
       host.docker.internal: host-gateway
-    #volumes:
-    #  -
+    volumes:
+      # Mount custom mass virtual hosting
+      - ${HOST_PATH_HTTPD_DATADIR}:/shared/httpd:rw${MOUNT_OPTIONS}
+
+      # Mount DB Backup directory
+      - ${HOST_PATH_BACKUPDIR:-./backups}:/shared/backups:rw${MOUNT_OPTIONS}
     networks:
       app_net:
         ipv4_address: 172.16.238.10
     depends_on:
       - bind
+  httpd:
+    image: httpd:2.4.63-alpine3.21
+    hostname: httpd
+    environment:
+      - SVCTL_ENABLE=1
+      - SVCTL_LISTEN_ADDR=0.0.0.0
+      - SVCTL_LISTEN_PORT=9001
+      - SVCTL_REMOTE_LOGS_ENABLE=1
+      - SVCTL_USER=${HTTPD_MGMT_USER:-supervisor}
+      - SVCTL_PASS=${HTTPD_MGMT_PASS:-mypassword}
+      - DEBUG_ENTRYPOINT=${DEBUG_ENTRYPOINT:-2}
+      - DEBUG_RUNTIME=1
+      - DOCKER_LOGS
+      - TIMEZONE
+      - NEW_UID
+      - NEW_GID
+      - WORKER_PROCESSES=${HTTPD_NGINX_WORKER_PROCESSES:-auto}
+      - WORKER_CONNECTIONS=${HTTPD_NGINX_WORKER_CONNECTIONS:-1024}
+      - HTTP2_ENABLE=${HTTPD_HTTP2_ENABLE:-1}
+      - MAIN_VHOST_ENABLE=1
+      - MAIN_VHOST_STATUS_ENABLE=1
+      - MAIN_VHOST_STATUS_ALIAS=/httpd-status
+      - MAIN_VHOST_SSL_TYPE=${HTTPD_VHOST_SSL_TYPE:-both}
+      - MAIN_VHOST_SSL_GEN=1
+      - MAIN_VHOST_BACKEND=conf:phpfpm:tcp:172.16.238.10:9000
+      - MAIN_VHOST_BACKEND_TIMEOUT=${HTTPD_BACKEND_TIMEOUT:-180}
+      - MASS_VHOST_ENABLE=1
+      - MASS_VHOST_TLD_SUFFIX=.${TLD_SUFFIX}
+      - MASS_VHOST_DOCROOT_DIR=${HTTPD_DOCROOT_DIR}
+      - MASS_VHOST_TEMPLATE_DIR=${HTTPD_TEMPLATE_DIR}
+      - MASS_VHOST_SSL_TYPE=${HTTPD_VHOST_SSL_TYPE:-both}
+      - MASS_VHOST_SSL_GEN=1
+      - MASS_VHOST_BACKEND=conf:phpfpm:tcp:172.16.238.10:9000
+      - MASS_VHOST_BACKEND_REWRITE=file:backend.cfg
+      - MASS_VHOST_BACKEND_TIMEOUT=${HTTPD_BACKEND_TIMEOUT:-180}
+    ports:
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_HTTPD}:80"
+      - "${LOCAL_LISTEN_ADDR}${HOST_PORT_HTTPD_SSL}:443"
+    networks:
+      app_net:
+        ipv4_address: 172.16.238.11
+    volumes:
+      # Mount custom mass virtual hosting
+      - ${HOST_PATH_HTTPD_DATADIR}:/shared/httpd:rw${MOUNT_OPTIONS}
+      - ./ca:/ca:rw${MOUNT_OPTIONS}
+      - ./cfg/vhost-gen:/etc/vhost-gen.d:rw${MOUNT_OPTIONS}
+    depends_on:
+      - bind
+      - php
 networks:
   app_net:
     driver: bridge
