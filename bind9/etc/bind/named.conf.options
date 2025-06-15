@@ -1,0 +1,19 @@
+acl trustedclients {
+    localhost;
+    localnets;
+    192.168.102.0/24;
+};
+
+options {
+    directory "/var/cache/bind";
+
+    recursion yes;
+    allow-query { trustedclients; };
+    allow-recursion { trustedclients; };
+
+    forward only;
+    forwarders {
+        8.8.8.8;
+        9.9.9.9;
+    };
+};
