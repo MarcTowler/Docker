@@ -13,3 +13,15 @@ services:
       - ./bind9/etc/bind/named.conf.options:/etc/bind/named.conf.options
       - ./bind9/etc/bind/db.homelab.lan:/etc/bind/db.homelab.lan
       - ./bind9/etc/bind/db.192.168:/etc/bind/db.192.168
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - '8080:8080'
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
