@@ -1,28 +1,15 @@
-services:
-  web:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
-  api:
-    build:
-      dockerfile: ./PHP/Dockerfile-Nginx
-    volumes:
-      - /var/www/html/vendor
-      - ./app:/var/www/html
-  db:
-    image: mysql:8.0
-    volumes:
-      - mysqldata:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
+#volumes:
 
-volumes:
-  mysqldata:
+services:
+  bind9:
+    image: bind9:latest
+    container_name: bind9
+    ports:
+      - '53:53/udp'
+      - '53:53/tcp'
+    restart: unless-stopped
+    volumes:
+      - ./bind9/etc/bind/named.conf.local:/etc/bind/named.conf.local
+      - ./bind9/etc/bind/named.conf.options:/etc/bind/named.conf.options
+      - ./bind9/etc/bind/db.homelab.lan:/etc/bind/db.homelab.lan
+      - ./bind9/etc/bind/db.192.168:/etc/bind/db.192.168
