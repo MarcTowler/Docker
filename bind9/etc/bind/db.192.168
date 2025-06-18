@@ -1,0 +1,18 @@
+$TTL 24h
+$ORIGIN 168.192.in-addr.arpa.
+@           IN      SOA     ns1.homelab.lan. admin.homelab.lan. (
+                                1               ; serial number
+		                        24h			    ; refresh period
+		                        2h			    ; retry period
+		                        1000h			; expire time
+		                        2d   			; negative TTL
+                                )
+
+            IN      NS      ns1.homelab.lan.
+
+$ORIGIN 102.168.192.in-addr.arpa.
+; Main VLAN network services
+10          IN      PTR     pvedemo1.homelab.lan.
+11          IN      PTR     pvedemo2.homelab.lan.
+12          IN      PTR     pvedemo3.homelab.lan.
+30          IN      PTR     host.homelab.lan.
