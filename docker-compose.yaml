@@ -66,3 +66,13 @@ services:
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager-data:/data
+  api:
+    image: PHPServer:latest
+    container_name: api
+    ports:
+      - '443:443'
+      - '80:80'
+    restart: unless-stopped
+    volumes:
+      - /var/www/html/vendor
+      - ./php/api:/var/www/html
