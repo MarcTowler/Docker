@@ -10,9 +10,9 @@ $ORIGIN 168.192.in-addr.arpa.
 
             IN      NS      ns1.homelab.lan.
 
-$ORIGIN 102.168.192.in-addr.arpa.
+$ORIGIN 1.168.192.in-addr.arpa.
 ; Main VLAN network services
-10          IN      PTR     pvedemo1.homelab.lan.
-11          IN      PTR     pvedemo2.homelab.lan.
-12          IN      PTR     pvedemo3.homelab.lan.
-30          IN      PTR     host.homelab.lan.
+151         IN      PTR     pvedemo1.homelab.lan.
+152         IN      PTR     pvedemo2.homelab.lan.
+153         IN      PTR     pvedemo3.homelab.lan.
+150         IN      PTR     host.homelab.lan.
