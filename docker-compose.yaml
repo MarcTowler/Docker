@@ -1,6 +1,7 @@
 volumes:
   prometheus-data: {}
   grafana-data: {}
+  alertmanager-data: {}
 services:
   bind9:
     image: bind9:latest
@@ -56,3 +57,12 @@ services:
     restart: unless-stopped
     volumes:
       - grafana-data:/var/lib/grafana
+  alertmanager:
+    image: quay.io/prometheus/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager-data:/data
