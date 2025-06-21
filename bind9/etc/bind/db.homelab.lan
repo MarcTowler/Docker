@@ -13,8 +13,11 @@ $ORIGIN homelab.lan.
 ns1		    IN      A	    192.168.1.150
 
 ; Main VLAN network services
-pvedemo1    IN      A       192.168.1.151
-pvedemo2    IN      A       192.168.1.152
-pvedemo3    IN      A       192.168.1.153
+api         IN      A       192.168.1.151
+gapi        IN      A       192.168.1.152
+rpg         IN      A       192.168.1.153
+site        IN      A       192.168.1.154
+sigr        IN      A       192.168.1.155
+elrakis     IN      A       192.168.1.156
 ns1         IN      A       192.168.1.150
 host        IN      A       192.168.1.150
