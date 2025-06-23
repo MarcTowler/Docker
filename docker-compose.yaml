@@ -2,6 +2,7 @@ volumes:
   prometheus-data: {}
   grafana-data: {}
   alertmanager-data: {}
+  data: {}
 services:
   bind9:
     image: bind9:latest
@@ -10,6 +11,9 @@ services:
       - '53:53/udp'
       - '53:53/tcp'
     restart: unless-stopped
+    networks:
+      homelab:
+        ipv4_address: 192.168.1.146
     volumes:
       - ./bind9/etc/bind/named.conf.local:/etc/bind/named.conf.local
       - ./bind9/etc/bind/named.conf.options:/etc/bind/named.conf.options
@@ -21,6 +25,7 @@ services:
     ports:
       - '8080:8080'
     restart: unless-stopped
+    network_mode: host
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -43,6 +48,7 @@ services:
     ports:
       - '9090:9090'
     restart: unless-stopped
+    network_mode: host
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
@@ -55,6 +61,7 @@ services:
     ports:
       - '3000:3000'
     restart: unless-stopped
+    network_mode: host
     volumes:
       - grafana-data:/var/lib/grafana
   alertmanager:
@@ -63,16 +70,39 @@ services:
     ports:
       - "9093:9093"
     restart: unless-stopped
+    network_mode: host
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager-data:/data
   api:
-    image: PHPServer:latest
+    image: phpserver:latest
     container_name: api
     ports:
       - '443:443'
       - '80:80'
     restart: unless-stopped
+    networks:
+      homelab:
+        ipv4_address: 192.168.1.145
     volumes:
       - /var/www/html/vendor
       - ./php/api:/var/www/html
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - 9443:9443
+    network_mode: host
+    volumes:
+      - data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+networks:
+  homelab:
+    driver: macvlan
+    driver_opts:
+      parent: enp1s0f0
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.0.0/20
+          gateway: 192.168.1.254
