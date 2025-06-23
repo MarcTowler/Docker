@@ -10,11 +10,11 @@ $ORIGIN homelab.lan.
 
 @           IN      NS      ns1.homelab.lan.
 
-ns1		    IN      A	    192.168.1.150
+ns1		    IN      A	    192.168.1.146
 
 ; Main VLAN network services
-pvedemo1    IN      A       192.168.1.151
+api         IN      A       192.168.1.145
 pvedemo2    IN      A       192.168.1.152
 pvedemo3    IN      A       192.168.1.153
-ns1         IN      A       192.168.1.150
-host        IN      A       192.168.1.150
+ns1         IN      A       192.168.1.146
+host        IN      A       192.168.1.146
