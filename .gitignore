@@ -21,3 +21,5 @@ bundles/
 vendor/pkg/
 pyenv
 Vagrantfile
+*.ini
+php/*
