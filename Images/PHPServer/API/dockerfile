@@ -1,0 +1,23 @@
+FROM php:8.1-apache
+
+WORKDIR /var/www/html
+
+RUN chown -R www-data:www-data /var/www/html && a2enmod rewrite
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/api/src
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+RUN docker-php-ext-install mysqli pdo pdo_mysql && apt-get update && apt-get install -y \
+    git \
+    zip \
+    p7zip-full
+
+COPY --from=composer:2.4 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html/api
+COPY ./composer.json ./
+RUN composer install --prefer-dist --no-dev --no-scripts --no-progress --no-interaction
+RUN composer dump-autoload --optimize
+
+EXPOSE 80

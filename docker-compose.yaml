@@ -3,6 +3,7 @@ volumes:
   grafana-data: {}
   alertmanager-data: {}
   data: {}
+  mysqldata: {}
 services:
   bind9:
     image: bind9:latest
@@ -75,7 +76,7 @@ services:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager-data:/data
   api:
-    image: phpserver:latest
+    image: php-api:latest
     container_name: api
     ports:
       - '443:443'
@@ -85,7 +86,7 @@ services:
       homelab:
         ipv4_address: 192.168.1.145
     volumes:
-      - ./php/api/Config:/var/www/html/api/src/Config
+      - ./php/api/:/var/www/html/api/
   gapi:
     image: phpserver:latest
     container_name: gapi
@@ -97,7 +98,7 @@ services:
       homelab:
         ipv4_address: 192.168.1.147
     volumes:
-      - ./php/gapi:/var/www/html
+      - ./php/gapi/Config:/var/www/html/gapi/src/Config
   rpg:
     image: phpserver:latest
     container_name: rpg
@@ -109,7 +110,7 @@ services:
       homelab:
         ipv4_address: 192.168.1.148
     volumes:
-      - ./php/rpg:/var/www/html
+      - ./php/rpg/Config:/var/www/html/rpg/src/Config
   site:
     image: phpserver:latest
     container_name: site
@@ -121,8 +122,25 @@ services:
       homelab:
         ipv4_address: 192.168.1.149
     volumes:
-      - ./php/site:/var/www/html
+      - ./php/site/Config:/var/www/html/site/src/Config
+  db:
+    image: mysql:8.0
+    container_name: db
+    volumes:
+      - mysqldata:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      homelab:
+        ipv4_address: 192.168.1.144
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+      MYSQL_DATABASE: docker-php
   portainer:
+    container_name: portainer
     image: portainer/portainer-ce:latest
     ports:
       - 9443:9443
