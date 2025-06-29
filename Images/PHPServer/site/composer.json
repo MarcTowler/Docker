@@ -1,0 +1,27 @@
+{
+    "name": "itslit/website",
+    "type": "project",
+    "description": "Itslit.uk website",
+    "homepage": "https://github.com/ItsLit-Media-and-Development/Website",
+    "license": "MIT",
+    "authors": [
+      {
+        "name": "Marc Towler",
+        "email": "marc@marctowler.co.uk",
+        "homepage": "https://www.marctowler.co.uk",
+        "role": "Developer"
+      }
+    ],
+    "require": {
+      "php": ">=5.5.0",
+      "guzzlehttp/guzzle": "~6.0"
+    },
+    "autoload": {
+      "psr-4": {
+        "SITE\\": "",
+        "SITE\\Library\\": "src/Library",
+        "SITE\\Controllers\\": "src/Application/Controllers",
+        "SITE\\Model\\": "src/Application/Model"
+      }
+    }
+  }
