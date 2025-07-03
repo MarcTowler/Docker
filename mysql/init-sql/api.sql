@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS `blog_post` (
 CREATE TABLE IF NOT EXISTS `blog_tags` (
   `post_id` int NOT NULL, 
   `tag_name` varchar(60) NOT NULL,
-  KEY `post_id`
+  UNIQUE KEY `post_id_UNIQUE` (`post_id`)
 ) ENGINE=InnoDB;
 
 --
