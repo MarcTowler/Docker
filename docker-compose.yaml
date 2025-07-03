@@ -88,7 +88,7 @@ services:
     volumes:
       - ./php/api/:/var/www/html/api/
   gapi:
-    image: phpserver:latest
+    image: php-gapi:latest
     container_name: gapi
     ports:
       - '443:443'
@@ -98,9 +98,9 @@ services:
       homelab:
         ipv4_address: 192.168.1.147
     volumes:
-      - ./php/gapi/Config:/var/www/html/gapi/src/Config
+      - ./php/GAPI/:/var/www/html/gapi/
   rpg:
-    image: phpserver:latest
+    image: php-rpg:latest
     container_name: rpg
     ports:
       - '443:443'
@@ -110,9 +110,9 @@ services:
       homelab:
         ipv4_address: 192.168.1.148
     volumes:
-      - ./php/rpg/Config:/var/www/html/rpg/src/Config
+      - ./php/RPG-Site/:/var/www/html/rpg/
   site:
-    image: phpserver:latest
+    image: php-site:latest
     container_name: site
     ports:
       - '443:443'
@@ -122,12 +122,13 @@ services:
       homelab:
         ipv4_address: 192.168.1.149
     volumes:
-      - ./php/site/Config:/var/www/html/site/src/Config
+      - ./php/Website/:/var/www/html/site/src/
   db:
     image: mysql:8.0
     container_name: db
     volumes:
       - mysqldata:/var/lib/mysql
+      - ./mysql/init-sql:/docker-entrypoint-initdb.d/:ro
     ports:
       - "3306:3306"
     networks:
@@ -135,10 +136,10 @@ services:
         ipv4_address: 192.168.1.144
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_USER: user
-      MYSQL_PASSWORD: secret
-      MYSQL_DATABASE: docker-php
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      #MYSQL_DATABASE: "${MYSQL_DATABASE}"
   portainer:
     container_name: portainer
     image: portainer/portainer-ce:latest
