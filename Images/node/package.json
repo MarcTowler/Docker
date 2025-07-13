@@ -1,0 +1,15 @@
+{
+    "name": "Comms-Hub",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "start": "nodemon server.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+         "bufferutil": "^4.0.1",
+         "utf-8-validate": "^6.0.0"
+    }
+}
