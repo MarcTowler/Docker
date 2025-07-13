@@ -75,6 +75,16 @@ services:
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
       - alertmanager-data:/data
+  socket_server:
+    image: node:latest
+    container_name: socket
+    command: nodemon src/server.js
+    restart: unless-stopped
+    networks:
+      homelab:
+        ipv4_address: 192.168.1.151
+    volumes:
+      - ./node/Socket-Server:/usr/app/src
   api:
     image: php-api:latest
     container_name: api
