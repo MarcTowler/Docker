@@ -18,3 +18,5 @@ $ORIGIN 1.168.192.in-addr.arpa.
 147			IN		PTR		gapi.homelab.lan.
 148			IN		PTR		rpg.homelab.lan.
 149			IN		PTR		site.homelab.lan.
+151			IN		PTR		socket.homelab.lan.
+152			IN		PTR		runner.homelab.lan.

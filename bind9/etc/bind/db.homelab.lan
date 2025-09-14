@@ -20,3 +20,5 @@ rpg		    IN      A       192.168.1.148
 site		IN		A		192.168.1.149
 ns1         IN      A       192.168.1.146
 host        IN      A       192.168.1.146
+socket		IN		A		192.168.1.151
+runner		IN		A		192.168.1.152
