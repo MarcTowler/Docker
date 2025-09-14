@@ -139,15 +139,15 @@ services:
     volumes:
       - ./php/Website/:/var/www/html/site/
   runner:
-    image: Runner:latest
+    image: runner:latest
     container_name: runner
     ports:
       - '443:443'
       - '80:80'
     restart: unless-stopped
     environment:
-      GH_PAT: "https://github.com/ItsLit-Media-and-Development/"
-      GITHUB_URL: "${GITHUB_URL}"
+      GH_PAT: "${GH_PAT}"
+      GITHUB_URL: "https://github.com/ItsLit-Media-and-Development/"
     networks:
       homelab:
         ipv4_address: 192.168.1.152
