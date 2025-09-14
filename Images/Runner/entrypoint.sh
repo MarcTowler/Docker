@@ -10,7 +10,7 @@ if [[ -z "${GITHUB_URL}" || -z "${GH_PAT}" ]]; then
   exit 1
 fi
 
-cd /home/docker/actions-runner
+cd /home/runner/actions-runner
 
 # Detect repo vs org
 if [[ "$GITHUB_URL" =~ github.com/([^/]+)/([^/]+) ]]; then
