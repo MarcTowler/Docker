@@ -147,7 +147,7 @@ services:
     restart: unless-stopped
     environment:
       GH_PAT: "${GH_PAT}"
-      GITHUB_URL: "https://github.com/ItsLit-Media-and-Development/"
+      GITHUB_URL: "https://github.com/ItsLit-Media-and-Development"
     networks:
       homelab:
         ipv4_address: 192.168.1.152
