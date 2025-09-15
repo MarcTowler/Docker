@@ -145,7 +145,7 @@ services:
     ports:
       - '443:443'
       - '80:80'
-    restart: unless-stopped
+    restart: always
     environment:
       GH_PAT: "${GH_PAT}"
       GITHUB_URL: "https://github.com/ItsLit-Media-and-Development"
@@ -156,6 +156,8 @@ services:
     volumes:
       - work:/home/runner/actions-runner/_work
       - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      replicas: 4
   db:
     image: mysql:8.0
     container_name: db
