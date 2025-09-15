@@ -22,6 +22,11 @@ URL_CLEAN="${GITHUB_URL%/}"
 
 cd /home/*/actions-runner || exit 1
 
+# ensure _work/_tool is writable by runner
+mkdir -p /home/runner/actions-runner/_work/_tool
+chown -R $(id -u):$(id -g) /home/runner/actions-runner/_work
+
+
 # Detect repo vs org
 if [[ "$URL_CLEAN" =~ github.com/([^/]+)/([^/]+)$ ]]; then
   OWNER="${BASH_REMATCH[1]}"

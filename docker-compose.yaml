@@ -156,8 +156,6 @@ services:
     volumes:
       - work:/home/runner/actions-runner/_work
       - /var/run/docker.sock:/var/run/docker.sock
-    deploy:
-      replicas: 4
   db:
     image: mysql:8.0
     container_name: db
