@@ -11,6 +11,10 @@ RUN useradd -m -d /home/runner runner \
     && mkdir -p /home/runner/actions-runner \
     && chown -R runner:runner /home/runner
 
+# Grant passwordless sudo to runner user
+RUN echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner \
+    && chmod 0440 /etc/sudoers.d/runner
+
 WORKDIR /home/runner/actions-runner
 
 # Download GitHub Actions runner
