@@ -40,12 +40,13 @@ fi
 # Validate runner group (fallback to Default if missing)
 AVAILABLE_GROUPS=$(curl -s -H "Authorization: token ${GH_PAT}" \
   -H "Accept: application/vnd.github.v3+json" \
-  "${GROUPS_API}" | jq -r '.[].name')
+  "${GROUPS_API}" | jq -r '.runner_groups[].name')
 
 if ! echo "${AVAILABLE_GROUPS}" | grep -qw "${RUNNER_GROUP}"; then
   echo "⚠️ Runner group '${RUNNER_GROUP}' not found. Falling back to 'Default'."
   RUNNER_GROUP="Default"
 fi
+
 
 # Request fresh token
 RUNNER_TOKEN=$(curl -s -X POST \
