@@ -149,6 +149,8 @@ services:
     environment:
       GH_PAT: "${GH_PAT}"
       GITHUB_URL: "https://github.com/ItsLit-Media-and-Development"
+      RUNNER_GROUP: "ContainerRunners"
+      RUNNER_LABELS: "self-hosted,Linux,X64,docker"
     networks:
       homelab:
         ipv4_address: 192.168.1.152
