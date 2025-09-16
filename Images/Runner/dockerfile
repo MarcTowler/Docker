@@ -1,43 +1,38 @@
 FROM ubuntu:22.04
 
-# Install base + docker CLI
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install required packages
 RUN apt-get update && apt-get install -y \
-    curl jq git iputils-ping sudo unzip \
-    ca-certificates gnupg lsb-release \
-    libicu70 libkrb5-3 zlib1g libssl3 liblttng-ust1 \
+    curl jq git sudo software-properties-common \
+    apt-transport-https ca-certificates gnupg lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Docker CLI
-RUN mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+# Install Docker CLI (so runner jobs can use `docker build` etc.)
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
        > /etc/apt/sources.list.d/docker.list \
-    && apt-get update && apt-get install -y docker-ce-cli \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get update && apt-get install -y docker-ce-cli
 
-# Create non-root user and add to docker group
-RUN groupadd docker \
-    && useradd -m -d /home/runner -G docker runner \
+# Create runner user, docker group with host’s GID passed at build
+ARG DOCKER_GID=118
+RUN groupadd -g ${DOCKER_GID} docker \
+    && useradd -m -d /home/runner -u 1000 -g docker -s /bin/bash runner \
     && mkdir -p /home/runner/actions-runner \
-    && chown -R runner:runner /home/runner
-
-# Grant passwordless sudo to runner user
-RUN echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner \
-    && chmod 0440 /etc/sudoers.d/runner
+    && chown -R runner:docker /home/runner
 
 WORKDIR /home/runner/actions-runner
 
-# Download GitHub Actions runner
+# Install GitHub Actions runner
 ARG RUNNER_VERSION=2.319.1
-RUN curl -o actions-runner.tar.gz -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
-    && tar xzf actions-runner.tar.gz \
-    && rm actions-runner.tar.gz \
-    && chown -R runner:runner /home/runner/actions-runner
+RUN curl -Ls https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
+    | tar xz \
+    && ./bin/installdependencies.sh
 
-# Copy scripts
-COPY entrypoint.sh /entrypoint.sh
+# Copy entry scripts
 COPY runner-entry.sh /runner-entry.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /runner-entry.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh /runner-entry.sh
-
+# Default entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
