@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Ensure work dir exists and has correct ownership
 mkdir -p /home/runner/actions-runner/_work
-chown -R runner:runner /home/runner/actions-runner/_work
+mkdir -p /home/runner/actions-runner/_tool
+chown -R runner:docker /home/runner/actions-runner
 
-# Drop privileges to runner
-exec su runner -c "/runner-entry.sh"
+# Drop to non-root user (runner)
+exec su - runner -c "/runner-entry.sh"
