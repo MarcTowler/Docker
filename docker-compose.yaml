@@ -151,6 +151,7 @@ services:
       GITHUB_URL: "https://github.com/ItsLit-Media-and-Development"
       RUNNER_GROUP: "ContainerRunners"
       RUNNER_LABELS: "self-hosted,Linux,X64,docker"
+      CLEANUP_AT: "02:00"
     networks:
       homelab:
         ipv4_address: 192.168.1.152

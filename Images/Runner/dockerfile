@@ -1,19 +1,24 @@
 FROM ubuntu:22.04
 
-# Install base dependencies
+# Install base + docker CLI
 RUN apt-get update && apt-get install -y \
     curl jq git iputils-ping sudo unzip \
+    ca-certificates gnupg lsb-release \
     libicu70 libkrb5-3 zlib1g libssl3 liblttng-ust1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+       > /etc/apt/sources.list.d/docker.list \
+    && apt-get update && apt-get install -y docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
 RUN useradd -m -d /home/runner runner \
     && mkdir -p /home/runner/actions-runner \
     && chown -R runner:runner /home/runner
-
-# Grant passwordless sudo to runner user
-RUN echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner \
-    && chmod 0440 /etc/sudoers.d/runner
 
 WORKDIR /home/runner/actions-runner
 
@@ -30,5 +35,4 @@ COPY runner-entry.sh /runner-entry.sh
 
 RUN chmod +x /entrypoint.sh /runner-entry.sh
 
-# Run as root initially (so entrypoint can chown volumes)
 ENTRYPOINT ["/entrypoint.sh"]
