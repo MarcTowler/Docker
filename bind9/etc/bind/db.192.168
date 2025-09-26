@@ -12,6 +12,7 @@ $ORIGIN 168.192.in-addr.arpa.
 
 $ORIGIN 1.168.192.in-addr.arpa.
 ; Main VLAN network services
+113			IN		PTR		ky.homelab.lan.
 144			IN		PTR		db.homelab.lan.
 145         IN      PTR     api.homelab.lan.
 146         IN      PTR     host.homelab.lan.
@@ -20,3 +21,4 @@ $ORIGIN 1.168.192.in-addr.arpa.
 149			IN		PTR		site.homelab.lan.
 151			IN		PTR		socket.homelab.lan.
 152			IN		PTR		runner.homelab.lan.
+233			IN		PTR		growlithe.homelab.lan.
