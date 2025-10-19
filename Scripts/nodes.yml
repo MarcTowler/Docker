@@ -1,0 +1,15 @@
+# nodes.yml - list manager and workers (hostnames or IPs)
+ssh_user: ubuntu
+parent_iface: eth0
+subnet: 192.168.1.0/24
+gateway: 192.168.1.1
+ip_range: 192.168.1.200/28
+macvlan_name: swarm-macvlan
+portainer_port: 9000
+
+manager:
+  - 192.168.1.10
+
+workers:
+  - 192.168.1.11
+  - 192.168.1.12

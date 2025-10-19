@@ -1,1 +1,59 @@
 This is a repo for my docker setup for development
+
+Copy this script to all 3 servers (e.g., /Scripts/setup-swarm.sh)
+
+Make executable:
+
+```bash
+chmod +x setup-swarm.sh
+```
+
+Run on the manager:
+
+```bash
+./Scripts/setup-swarm.sh manager
+```
+
+On each worker run:
+
+```bash
+./Scripts/setup-swarm.sh worker
+```
+
+To verify, on the manager run:
+
+```bash
+docker node ls
+docker network ls
+```
+
+You can deploy a test:
+
+```bash
+docker service create --name test-nginx --network swarm-macvlan --replicas 3 nginx
+docker service ps test-nginx
+```
+
+Each replica should have its own IP from the macvlan range (192.168.1.200–.214).
+
+
+------------------------
+
+## All in one script
+
+3) How to run (step-by-step)
+
+Put nodes.yml and provision_swarm_from_bastion.sh on your bastion/admin host.
+
+Ensure passwordless SSH from bastion to each node:
+
+On bastion: ssh-keygen -t ed25519 (if not already)
+
+ssh-copy-id ubuntu@192.168.1.11 (repeat for each node)
+
+Make the controller executable:
+
+```bash
+chmod +x provision_swarm_from_bastion.sh
+./provision-from-bastion.sh nodes.yml
+```
