@@ -4,7 +4,7 @@ set -e
 # ==== CONFIGURATION ====
 NETWORK_NAME="swarm"
 PARENT_IFACE="enp1s0f0"               # your NIC interface
-SUBNET="192.168.0.0/20"           # your LAN subnet
+SUBNET="192.168.1.0/20"           # your LAN subnet
 GATEWAY="192.168.1.254"             # your LAN gateway
 RANGE="192.168.1.0/20"          # available IPs for containers
 
