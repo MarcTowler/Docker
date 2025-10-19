@@ -6,20 +6,18 @@ services:
     ports:
       - "80:80"
     environment:
-      - BACK_URL=http://back:5000
+      - BACK_URL=back:5000
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
-    depends_on:
-      - back  # harmless but ignored by Swarm
     networks:
       - kitchenowl_net
 
   back:
     image: tombursch/kitchenowl-backend:latest
     environment:
-      - JWT_SECRET_KEY=itslit
+      - JWT_SECRET_KEY=PLEASE_CHANGE_ME
     volumes:
       - kitchenowl_data:/data
     deploy:
