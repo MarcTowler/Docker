@@ -6,6 +6,7 @@ services:
     ports:
       - "80:80"
     environment:
+      # 👇 MUST match the backend service name
       - BACK_URL=back:5000
     deploy:
       replicas: 1
@@ -13,6 +14,8 @@ services:
         condition: on-failure
     networks:
       - kitchenowl_net
+    depends_on:
+      - back  # ignored by Swarm but kept for clarity
 
   back:
     image: tombursch/kitchenowl-backend:latest
