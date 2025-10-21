@@ -12,15 +12,21 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.kitchenowl.rule=Host(`meals.itslit`) || Host(`192.168.1.233`)"
+      - "traefik.http.routers.kitchenowl.entrypoints=websecure"
+      - "traefik.http.routers.kitchenowl.middlewares=security@docker" # Use to apply security middlewares
     networks:
-      - kitchenowl_net
+      - traefik-public
     depends_on:
       - back  # ignored by Swarm but kept for clarity
 
   back:
     image: tombursch/kitchenowl-backend:latest
     environment:
-      - JWT_SECRET_KEY=PLEASE_CHANGE_ME
+      - JWT_SECRET_KEY=itslit_now
     volumes:
       - kitchenowl_data:/data
     deploy:
