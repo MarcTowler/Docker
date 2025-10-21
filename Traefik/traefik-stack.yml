@@ -1,40 +1,18 @@
 version: "3.9"
 
 services:
-  traefik:
+    traefik:
     image: traefik:v3.1
-    command:
-      # Swarm provider
-      - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
-      - "--providers.swarm.exposedByDefault=false"
-
-      # Entrypoints
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-
-      # HTTP → HTTPS redirect
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-
-      # Dashboard
-      - "--api.dashboard=true"
-      - "--api.insecure=true"  # Disable in prod
-
-      # Self-signed TLS for internal HTTPS
-      - "--entrypoints.websecure.http.tls=true"
-      - "--tls.certificates[0].certFile=/certs/selfsigned.crt"
-      - "--tls.certificates[0].keyFile=/certs/selfsigned.key"
-
+    networks:
+      - traefik-net
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"  # Dashboard
-
+      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/certs
-    networks:
-      - traefik-net
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
     deploy:
       placement:
         constraints:
