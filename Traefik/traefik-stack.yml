@@ -22,8 +22,8 @@ services:
 
       # Self-signed TLS for internal HTTPS
       - "--entrypoints.websecure.http.tls=true"
-      - "--entrypoints.websecure.http.tls.certificates[0].certFile=/certs/selfsigned.crt"
-      - "--entrypoints.websecure.http.tls.certificates[0].keyFile=/certs/selfsigned.key"
+      - "--tls.certificates[0].certFile=/certs/selfsigned.crt"
+      - "--tls.certificates[0].keyFile=/certs/selfsigned.key"
 
     ports:
       - "80:80"
