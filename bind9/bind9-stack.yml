@@ -1,26 +1,35 @@
-version: "3.9"
+version: "3.8"
 
 services:
   bind9:
     image: internetsystemsconsortium/bind9:9.18
+    networks:
+      - traefik-public
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - bind_data:/etc/bind
     environment:
       - TZ=UTC
-    networks:
-      - traefik-net
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-    volumes:
-      - ./bind/etc:/etc/bind
-      - ./bind/cache:/var/cache/bind
-      - ./bind/lib:/var/lib/bind
     deploy:
       placement:
-        constraints:
-          - node.role == manager
-      restart_policy:
-        condition: any
+        constraints: [node.role == manager]
+    configs:
+      - source: bind_named_conf_local
+        target: /etc/bind/named.conf.local
+      - source: bind_zone_itslit
+        target: /etc/bind/db.itslit
+
+configs:
+  bind_named_conf_local:
+    file: ./bind/etc/named.conf.local
+  bind_zone_itslit:
+    file: ./bind/etc/db.itslit
 
 networks:
-  traefik-net:
+  traefik-public:
     external: true
+
+volumes:
+  bind_data:
