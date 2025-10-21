@@ -12,8 +12,8 @@ docker stack deploy -c ~/Docker/bind9/bind9-stack.yml bind9
 echo "=== BIND9 service deployed ==="
 
 # Generate TLS Certificates for Traefik
-mkdir -p ~/traefik/certs
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ~/traefik/certs/traefik.key -out ~/traefik/certs/traefik.crt -subj "/CN=*.itslit"
+mkdir -p Docker/Traefik/certs
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout Docker/Traefik/certs/traefik.key -out Docker/Traefik/certs/traefik.crt -subj "/CN=*.itslit"
 echo "=== TLS certificates for Traefik generated ==="
 
 # Deploy Traefik Service
