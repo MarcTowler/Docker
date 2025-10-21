@@ -2,6 +2,11 @@
 docker network create -d overlay traefik-net
 echo "=== Overlay network 'traefik-net' created ==="
 
+#Make sure directories exist
+mkdir -p ~/Docker/bind9/bind/etc
+mkdir -p ~/Docker/bind9/bind/cache
+mkdir -p ~/Docker/bind9/bind/lib
+
 # Deploy BIND9 Service
 docker stack deploy -c ~/Docker/bind9/bind9-stack.yml bind9
 echo "=== BIND9 service deployed ==="
