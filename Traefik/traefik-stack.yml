@@ -4,7 +4,7 @@ services:
   traefik:
     image: traefik:v3.1
     command:
-      # Swarm provider
+      # Use Swarm provider instead of docker.swarmMode
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.swarm.exposedByDefault=false"
 
@@ -12,29 +12,28 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
 
-      # HTTP → HTTPS redirect
+      # Optional: redirect HTTP to HTTPS
       - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
 
       # Dashboard
       - "--api.dashboard=true"
-      - "--api.insecure=true"  # Disable in prod
+      - "--api.insecure=true"  # optional: only for local testing
 
-      # Self-signed TLS for internal HTTPS
-      - "--entrypoints.websecure.http.tls=true"
-      - "--entrypoints.websecure.http.tls.certificates[0].certFile=/certs/selfsigned.crt"
-      - "--entrypoints.websecure.http.tls.certificates[0].keyFile=/certs/selfsigned.key"
+      # Let's Encrypt (optional — only if you have a domain)
+      # - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      # - "--certificatesresolvers.letsencrypt.acme.email=you@example.com"
+      # - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
 
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"  # Dashboard
+      - "8080:8080"  # optional dashboard
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./certs:/certs
-    networks:
-      - traefik-net
+      - traefik_letsencrypt:/letsencrypt
+
     deploy:
       placement:
         constraints:
@@ -42,9 +41,8 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.api.rule=Host(`traefik.itslit`)"
-        - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.service=api@internal"
+        - "traefik.http.routers.api.entrypoints=websecure"
 
-networks:
-  traefik-net:
-    external: true
+volumes:
+  traefik_letsencrypt:
