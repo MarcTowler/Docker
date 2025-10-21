@@ -32,7 +32,7 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/certs:/certs
+      - .~/traefik/certs:/certs
     networks:
       - traefik-net
     deploy:
