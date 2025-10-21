@@ -3,8 +3,6 @@ version: "3.8"
 services:
   front:
     image: tombursch/kitchenowl-web:latest
-    ports:
-      - "80:80"
     environment:
       # 👇 MUST match the backend service name
       - BACK_URL=back:5000
