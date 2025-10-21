@@ -38,3 +38,7 @@ services:
 
 volumes:
   kitchenowl_data:
+
+networks:
+  traefik-public:
+    external: true
