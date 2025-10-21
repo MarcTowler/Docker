@@ -34,11 +34,7 @@ services:
       restart_policy:
         condition: on-failure
     networks:
-      - kitchenowl_net
+      - traefik-public
 
 volumes:
   kitchenowl_data:
-
-networks:
-  kitchenowl_net:
-    driver: overlay
