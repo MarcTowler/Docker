@@ -14,7 +14,7 @@ services:
       - "--log.level=INFO"
       - "--accesslog=true"
       - "--ping=true"
-      # --- Self-signed TLS ---
+      # Self-signed HTTPS
       - "--entrypoints.websecure.http.tls=true"
       - "--serversTransport.insecureSkipVerify=true"
     ports:
@@ -23,7 +23,6 @@ services:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik_certs:/certs
     networks:
       - traefik-public
     deploy:
@@ -37,9 +36,6 @@ services:
         - "traefik.http.routers.api.service=api@internal"
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.tls=true"
-
-volumes:
-  traefik_certs:
 
 networks:
   traefik-public:
