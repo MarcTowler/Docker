@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  bind9:
+    image: internetsystemsconsortium/bind9:9.18
+    environment:
+      - TZ=UTC
+    networks:
+      - traefik-net
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      - ./bind/etc:/etc/bind
+      - ./bind/cache:/var/cache/bind
+      - ./bind/lib:/var/lib/bind
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: any
+
+networks:
+  traefik-net:
+    external: true
