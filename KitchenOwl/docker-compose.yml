@@ -14,7 +14,7 @@ services:
         condition: on-failure
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=web"
+      - "traefik.docker.network=traefik-public"
       - "traefik.http.routers.kitchenowl.rule=Host(`meals.itslit`) || Host(`192.168.1.233`)"
       - "traefik.http.routers.kitchenowl.entrypoints=websecure"
       - "traefik.http.routers.kitchenowl.middlewares=security@docker" # Use to apply security middlewares
