@@ -1,16 +1,14 @@
 zone "itslit" {
     type master;
     file "/etc/bind/db.itslit";
+    allow-update { any; };
 };
 
 options {
     directory "/var/cache/bind";
     allow-query { any; };
     recursion yes;
-    forwarders {
-        1.1.1.1; 8.8.8.8;
-    };
-    dnssec-validation no;
+    forwarders { 1.1.1.1; 8.8.8.8; };
     listen-on { any; };
-    allow-transfer { none; };
+    dnssec-validation no;
 };

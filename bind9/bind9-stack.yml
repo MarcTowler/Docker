@@ -12,24 +12,41 @@ services:
       - bind_data:/etc/bind
     environment:
       - TZ=UTC
+    configs:
+      - source: named_conf_local
+        target: /etc/bind/named.conf.local
+      - source: zone_file
+        target: /etc/bind/db.itslit
     deploy:
       placement:
         constraints: [node.role == manager]
+
+  bind-updater:
+    image: python:3.12-slim
+    command: ["python", "/scripts/docker_bind_updater.py"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - bind_data:/etc/bind
+    networks:
+      - traefik-public
     configs:
-      - source: bind_named_conf_local
-        target: /etc/bind/named.conf.local
-      - source: bind_zone_itslit
-        target: /etc/bind/db.itslit
+      - source: updater_script
+        target: /scripts/docker_bind_updater.py
+    deploy:
+      placement:
+        constraints: [node.role == manager]
 
 configs:
-  bind_named_conf_local:
+  named_conf_local:
     file: ./bind/etc/named.conf.local
-  bind_zone_itslit:
+  zone_file:
     file: ./bind/etc/db.itslit
+  updater_script:
+    file: ./bind/docker_bind_updater.py
+
+volumes:
+  bind_data:
 
 networks:
   traefik-public:
     external: true
-
-volumes:
-  bind_data:
