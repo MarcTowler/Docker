@@ -18,6 +18,7 @@ services:
       - "traefik.http.routers.kitchenowl.middlewares=security@docker" # Use to apply security middlewares
     networks:
       - traefik-public
+      - internal
     depends_on:
       - back  # ignored by Swarm but kept for clarity
 
@@ -33,6 +34,7 @@ services:
         condition: on-failure
     networks:
       - traefik-public
+      - internal
 
 volumes:
   kitchenowl_data:
@@ -40,3 +42,5 @@ volumes:
 networks:
   traefik-public:
     external: true
+  internal:
+    driver: overlay
