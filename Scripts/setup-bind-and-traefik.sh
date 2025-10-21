@@ -12,13 +12,13 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ~/traefik/certs/trae
 echo "=== TLS certificates for Traefik generated ==="
 
 # Deploy Traefik Service
-docker stack deploy -c ../traefik/traefik-stack.yml traefik
+docker stack deploy -c ../Traefik/traefik-stack.yml traefik
 echo "=== Traefik service deployed ==="
 
 echo "=== Setup complete: BIND9 and Traefik are running on 'traefik-net' overlay network ==="
 
 # Build Test App
-cat >> whoami.yml << EOF
+cat > whoami.yml << EOF
 version: "3.9"
 
 services:
