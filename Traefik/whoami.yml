@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  whoami:
+    image: traefik/whoami
+    networks:
+      - traefik-net
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.whoami.rule=Host(`whoami.itslit`)"
+        - "traefik.http.routers.whoami.entrypoints=websecure"
+        - "traefik.http.services.whoami.loadbalancer.server.port=80"
+
+networks:
+  traefik-net:
+    external: true
