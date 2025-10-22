@@ -32,7 +32,7 @@ services:
         constraints: [node.role == manager]
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.api.rule=Host(`traefik.itslit`) || Host(`traefik.designdeveloprealize.com`)"
+        - "traefik.http.routers.api.rule=Host(`traefik.itslit`)"
         - "traefik.http.routers.api.service=api@internal"
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.tls=true"
