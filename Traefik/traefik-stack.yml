@@ -17,10 +17,6 @@ services:
       # Self-signed HTTPS
       - "--entrypoints.websecure.http.tls=true"
       - "--serversTransport.insecureSkipVerify=true"
-
-      # Basic‑auth middleware
-      - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$apr1$$pEyOmmin$$coDEjTjkEUPh3v98zZgXu1"
-      - "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
     ports:
       - "80:80"
       - "443:443"
@@ -40,7 +36,9 @@ services:
         - "traefik.http.routers.api.service=api@internal"
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.tls=true"
-
+        # Basic‑auth middleware
+        - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$apr1$$pEyOmmin$$coDEjTjkEUPh3v98zZgXu1"
+        - "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
 networks:
   traefik-public:
     external: true
