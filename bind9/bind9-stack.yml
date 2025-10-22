@@ -22,19 +22,18 @@ services:
         constraints: [node.role == manager]
 
   bind-updater:
-    image: ghcr.io/gliderlabs/docker-gen:latest
-    command: -watch -notify "bash /scripts/update-dns.sh" /templates/hosts.tmpl /tmp/hosts.txt
+    image: python:3.12-slim
+    command: >
+      bash -c "pip install --no-cache-dir docker && python /scripts/docker_bind_updater.py"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - bind_scripts:/scripts
+      - /var/run/docker.sock:/var/run/docker.sock
       - bind_data:/etc/bind
+      - ./bind/docker_bind_updater.py:/scripts/docker_bind_updater.py
     networks:
       - traefik-public
     configs:
-      - source: update_script
-        target: /scripts/update-dns.sh
-      - source: hosts_template
-        target: /templates/hosts.tmpl
+      - source: updater_script
+        target: /scripts/docker_bind_updater.py
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -44,14 +43,11 @@ configs:
     file: ./bind/etc/named.conf.local
   zone_file:
     file: ./bind/etc/db.itslit
-  update_script:
-    file: ./bind/update-dns.sh
-  hosts_template:
-    file: ./bind/hosts.tmpl
+  updater_script:
+    file: ./bind/docker_bind_updater.py
 
 volumes:
   bind_data:
-  bind_scripts:
 
 networks:
   traefik-public:
