@@ -41,9 +41,9 @@ services:
 
 configs:
   named_conf_local:
-    file: ./bind/named.conf.local
+    file: ./bind/etc/named.conf.local
   zone_file:
-    file: ./bind/db.itslit
+    file: ./bind/etc/db.itslit
   update_script:
     file: ./bind/update-dns.sh
   hosts_template:
