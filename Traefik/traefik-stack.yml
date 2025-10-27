@@ -39,6 +39,17 @@ services:
         # Basic‑auth middleware
         - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$apr1$$pEyOmmin$$coDEjTjkEUPh3v98zZgXu1"
         - "traefik.http.routers.dashboard.middlewares=dashboard-auth@swarm"
+      ports:
+        - target: 80
+          published: 80
+          protocol: tcp
+        - target: 443
+          published: 443
+          protocol: tcp
+        - target: 8080
+          published: 8080
+          protocol: tcp
+
 networks:
   traefik-public:
     external: true
