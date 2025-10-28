@@ -49,12 +49,7 @@ services:
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.service=api@internal"
         - "traefik.http.routers.api.middlewares=redirect-to-dashboard,auth,lan-whitelist"
-
-        # --- Redirect Middleware ---
-        - "traefik.http.middlewares.redirect-to-dashboard.redirectregex.regex=^https?://([^/]+)/?$"
-        - "traefik.http.middlewares.redirect-to-dashboard.redirectregex.replacement=https://$$1/dashboard/"
-        - "traefik.http.middlewares.redirect-to-dashboard.redirectregex.permanent=true"
-
+        
         # --- Basic Auth Middleware ---
         - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$g.xpo.gY$Ss1l6Rjf3RahCVAdvw35x1"
 
