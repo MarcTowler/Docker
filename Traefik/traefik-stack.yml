@@ -52,22 +52,10 @@ services:
 
         # --- Redirect Middleware ---
         - "traefik.http.middlewares.redirect-to-dashboard.redirectregex.regex=^https?://([^/]+)/?$"
-        - "traefik.http.middlewares.redirect-to-dashboard.redirectregex.replacement=https://$1/dashboard/"
+        - "traefik.http.middlewares.redirect-to-dashboard.redirectregex.replacement=https://$$1/dashboard/"
         - "traefik.http.middlewares.redirect-to-dashboard.redirectregex.permanent=true"
 
         # --- Basic Auth Middleware ---
-        # Replace the hash with your own from `htpasswd -nb admin strongpassword`
-        - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$HvQ9n8uX$4nWvYz5k6Z7fUZkLKxAtH/"
+        - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$g.xpo.gY$Ss1l6Rjf3RahCVAdvw35x1"
 
-        # --- LAN Whitelist Middleware ---
-        - "traefik.http.middlewares.lan-whitelist.ipwhitelist.sourcerange=192.168.1.0/24"
-
-        # --- TLS Settings ---
-        - "traefik.http.routers.api.tls=true"
-        - "traefik.http.routers.api.tls.certresolver=localcerts"
-        - "traefik.http.routers.api.tls.domains[0].main=itslit"
-        - "traefik.http.routers.api.tls.domains[0].sans=*.itslit"
-
-networks:
-  traefik-public:
-    external: true
+        #
