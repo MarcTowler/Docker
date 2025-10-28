@@ -8,7 +8,7 @@ services:
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.swarm.network=traefik-public"
       - "--providers.swarm.exposedByDefault=false"
-      - "--providers.file.filename=/certs/certs.yml"
+      - "--providers.file.filename=/home/user/Docker/Traefik/certs/certs.yml"
 
       # --- Entrypoints ---
       - "--entrypoints.web.address=:80"
@@ -30,17 +30,17 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /certs:/certs:ro
+      - /home/user/Docker/Traefik/certs:/certs:ro
 
     deploy:
       placement:
         constraints:
           - node.role == manager
       labels:
-        # Tell Swarm provider which port Traefik listens on
+        # Service port (required for Swarm provider)
         - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
-        # Dashboard router — very simple
+        # Dashboard router
         - "traefik.enable=true"
         - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.itslit`) && PathPrefix(`/dashboard`)"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
