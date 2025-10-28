@@ -1,52 +1,19 @@
-version: "3.9"
+version: "3.8"
 
 services:
   registry:
     image: registry:2
-    deploy:
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
-      labels:
-        # --- Traefik configuration ---
-        - traefik.enable=true
-
-        # HTTP entrypoints
-        - traefik.http.routers.registry.rule=Host(`registry.itslit`, `registry.designdeveloprealize.com`)
-        - traefik.http.routers.registry.entrypoints=websecure
-        - traefik.http.routers.registry.tls=true
-
-        # Optional: redirect to HTTPS
-        - traefik.http.middlewares.registry-https-redirect.redirectscheme.scheme=https
-        - traefik.http.routers.registry-http.rule=Host(`registry.itslit`, `registry.designdeveloprealize.com`)
-        - traefik.http.routers.registry-http.entrypoints=web
-        - traefik.http.routers.registry-http.middlewares=registry-https-redirect
-
-        # Optional: basic auth if using Traefik middleware
-        #- traefik.http.middlewares.registry-auth.basicauth.users=admin:$$apr1$$pEyOmmin$$coDEjTjkEUPh3v98zZgXu1
-
-        # Service definition
-        - traefik.http.services.registry.loadbalancer.server.port=5000
-
-    environment:
-      REGISTRY_AUTH: htpasswd
-      REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
-      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
-      REGISTRY_HTTP_SECRET: ${REGISTRY_HTTP_SECRET:-supersecret}
-      # Optional: enable pull-through cache (mirror of Docker Hub)
-      REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
-    volumes:
-      - registry_data:/var/lib/registry
-      - ./auth:/auth
     networks:
       - traefik-public
-    ports:
-      - "5000:5000"  # only if you want direct internal access (optional)
-
-volumes:
-  registry_data:
-    driver: local
+    volumes:
+      - /mnt/data/registry:/var/lib/registry
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.registry.rule=Host(`registry.itslit`)"
+        - "traefik.http.services.registry.loadbalancer.server.port=5000"
+        - "traefik.http.routers.registry.entrypoints=web"
+        - "traefik.http.routers.registry.service=registry"
 
 networks:
   traefik-public:
