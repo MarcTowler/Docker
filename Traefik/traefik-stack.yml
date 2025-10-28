@@ -48,7 +48,7 @@ services:
         - "traefik.http.services.api.loadbalancer.server.port=8080"
 
         # Basic Auth middleware
-        - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$HvQ9n8uX$4nWvYz5k6Z7fUZkLKxAtH/"
+        #- "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$HvQ9n8uX$4nWvYz5k6Z7fUZkLKxAtH/"
 
         # IP whitelist middleware (LAN only)
         - "traefik.http.middlewares.lan-whitelist.ipwhitelist.sourcerange=192.168.1.0/24"
