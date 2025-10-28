@@ -38,7 +38,7 @@ services:
           - node.role == manager
       labels:
         # --- Middlewares ---
-        - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$g.xpo.gY$Ss1l6Rjf3RahCVAdvw35x1"
+        - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$Flj8rq/B$1FkyXv9r1EA1Wwd8K4qDE1"
         - "traefik.http.middlewares.lan-whitelist.ipallowlist.sourcerange=192.168.1.0/20"
 
         # --- Service port (required for Swarm provider) ---
