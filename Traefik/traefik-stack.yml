@@ -50,10 +50,10 @@ services:
 
         # Dashboard router
         - "traefik.enable=true"
-        - "traefik.http.routers.api.rule=Host(`traefik.itslit`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`) || Path(`/`))"
+        - "traefik.http.routers.api.rule=Host(`traefik.itslit`)"
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.service=api@internal"
-        - "traefik.http.routers.api.middlewares=redirect-to-dashboard,auth,lan-whitelist"
+        - "traefik.http.routers.api.middlewares=auth,lan-whitelist"
         - "traefik.http.routers.api.tls=true"
 
 networks:
