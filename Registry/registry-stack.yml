@@ -8,6 +8,9 @@ services:
     volumes:
       - /mnt/data/registry:/var/lib/registry
     deploy:
+      placement:
+        constraints:
+          - node.hostname == growlithe
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.registry.rule=Host(`registry.itslit`)"
