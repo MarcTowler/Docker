@@ -43,7 +43,7 @@ services:
         #- "traefik.http.middlewares.redirect-to-dashboard.redirectregex.permanent=true"
 
         #- "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$g.xpo.gY$Ss1l6Rjf3RahCVAdvw35x1"
-        - "traefik.http.middlewares.lan-whitelist.ipallowlist.sourcerange=192.168.1.0/24"
+        - "traefik.http.middlewares.lan-whitelist.ipallowlist.sourcerange=192.168.1.0/20"
 
         # Dummy service port (required for Swarm)
         - "traefik.http.services.traefik.loadbalancer.server.port=8080"
