@@ -19,13 +19,14 @@ services:
       # --- Logging ---
       - "--log.level=INFO"
 
-      # --- Certificates (mkcert or ACME storage) ---
-      - "--certificatesresolvers.localcerts.acme.tlschallenge=true"
-      - "--certificatesresolvers.localcerts.acme.email=admin@itslit"
-      - "--certificatesresolvers.localcerts.acme.storage=/letsencrypt/acme.json"
+      # TLS - use mkcert certs
+      - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.websecure.http.tls.certificates.certFile=/certs/itslit.pem"
+      - "--entrypoints.websecure.http.tls.certificates.keyFile=/certs/itslit-key.pem"
 
     ports:
       - "80:80"
+      - "8080:8080"
       - "443:443"
 
     networks:
@@ -44,19 +45,17 @@ services:
       labels:
         - "traefik.enable=true"
 
-        # --- Dashboard Router ---
-        - "traefik.http.routers.api.rule=Host(`traefik.itslit`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`) || Path(`/`))"
-        - "traefik.http.routers.api.entrypoints=websecure"
-        - "traefik.http.routers.api.service=api@internal"
-        - "traefik.http.routers.api.middlewares=redirect-to-dashboard,auth,lan-whitelist"
-        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
-
-
         # --- Basic Auth Middleware ---
         - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$g.xpo.gY$Ss1l6Rjf3RahCVAdvw35x1"
 
         # --- LAN Whitelist Middleware ---
         - "traefik.http.middlewares.lan-whitelist.ipwhitelist.sourcerange=192.168.1.0/24"
+
+        # --- Dashboard Router ---
+        - "traefik.http.routers.api.rule=Host(`traefik.itslit`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`) || Path(`/`))"
+        - "traefik.http.routers.api.entrypoints=websecure"
+        - "traefik.http.routers.api.service=api@internal"
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
         # --- TLS Settings ---
         - "traefik.http.routers.api.tls=true"
