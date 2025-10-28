@@ -30,7 +30,7 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /home/user/Docker/Traefik/certs:/certs:ro
+      - /home/marctowler/Docker/Traefik/certs:/certs:ro
 
     deploy:
       placement:
