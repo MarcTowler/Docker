@@ -30,7 +30,7 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /srv/traefik/certs:/certs:ro
+      - certs:/certs:ro
 
     deploy:
       placement:
