@@ -8,7 +8,7 @@ services:
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.swarm.network=traefik-public"
       - "--providers.swarm.exposedByDefault=false"
-      - "--providers.file.filename=/home/marctowler/Docker/Traefik/certs/certs.yml"
+      - "--providers.file.filename=/certs/certs.yml"
 
       # --- Entrypoints ---
       - "--entrypoints.web.address=:80"
