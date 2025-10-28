@@ -21,8 +21,9 @@ services:
 
       # TLS - use mkcert certs
       - "--entrypoints.websecure.http.tls=true"
-      - "--entrypoints.websecure.http.tls.certificates.certFile=/certs/itslit.pem"
-      - "--entrypoints.websecure.http.tls.certificates.keyFile=/certs/itslit-key.pem"
+      - "--entrypoints.websecure.http.tls.certificates.certFile=/certs/_wildcard.itslit+1.pem"
+      - "--entrypoints.websecure.http.tls.certificates.keyFile=/certs/_wildcard.itslit+1-key.pem"
+
 
     ports:
       - "80:80"
