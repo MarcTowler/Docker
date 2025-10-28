@@ -8,7 +8,7 @@ services:
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.swarm.network=traefik-public"
       - "--providers.swarm.exposedByDefault=false"
-      - "--providers.file.filename=/certs/certs.yml"
+      - "--providers.file.filename=certs.yml"
 
       # Entrypoints
       - "--entrypoints.web.address=:80"
@@ -53,7 +53,7 @@ services:
         - "traefik.http.routers.api.rule=Host(`traefik.itslit`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`) || Path(`/`))"
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.service=api@internal"
-        - "traefik.http.routers.api.middlewares=auth,lan-whitelist"
+        - "traefik.http.routers.api.middlewares=lan-whitelist"
         - "traefik.http.routers.api.tls=true"
 
 networks:
