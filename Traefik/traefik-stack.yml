@@ -8,7 +8,7 @@ services:
       - "--providers.swarm.endpoint=unix:///var/run/docker.sock"
       - "--providers.swarm.network=traefik-public"
       - "--providers.swarm.exposedByDefault=false"
-      - "--providers.file.filename=certs.yml"
+      - "--providers.file.filename=/certs/certs.yml"
 
       # Entrypoints
       - "--entrypoints.web.address=:80"
@@ -37,22 +37,19 @@ services:
         constraints:
           - node.role == manager
       labels:
-        # Middlewares first
-        #- "traefik.http.middlewares.redirect-to-dashboard.redirectregex.regex=^https?://([^/]+)/?$"
-        #- "traefik.http.middlewares.redirect-to-dashboard.redirectregex.replacement=https://$$1/dashboard/"
-        #- "traefik.http.middlewares.redirect-to-dashboard.redirectregex.permanent=true"
+        # --- Middlewares ---
+        - "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$g.xpo.gY$Ss1l6Rjf3RahCVAdvw35x1"
+        - "traefik.http.middlewares.lan-whitelist.ipallowlist.sourcerange=192.168.1.0/20"
 
-        #- "traefik.http.middlewares.auth.basicauth.users=admin:$apr1$g.xpo.gY$Ss1l6Rjf3RahCVAdvw35x1"
-        #- "traefik.http.middlewares.lan-whitelist.ipallowlist.sourcerange=192.168.1.0/20"
-
-        # Dummy service port (required for Swarm)
+        # --- Service port (required for Swarm provider) ---
         - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
-        # Dashboard router
+        # --- Dashboard router ---
         - "traefik.enable=true"
-        - "traefik.http.routers.api.rule=Host(`traefik.itslit`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`) || Path(`/`))"
+        - "traefik.http.routers.api.rule=Host(`traefik.itslit`) && PathPrefix(`/dashboard`)"
         - "traefik.http.routers.api.entrypoints=websecure"
         - "traefik.http.routers.api.service=api@internal"
+        - "traefik.http.routers.api.middlewares=auth,lan-whitelist"
         - "traefik.http.routers.api.tls=true"
 
 networks:
