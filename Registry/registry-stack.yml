@@ -7,7 +7,6 @@ services:
       - traefik_proxy
     volumes:
       - /mnt/data/registry:/var/lib/registry
-    co
     deploy:
       placement:
         constraints:
