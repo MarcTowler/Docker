@@ -10,12 +10,8 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.kitchenowl.rule=Host(`meals.itslit`)"
-        - "traefik.http.services.kitchenowl.loadbalancer.server.port=8080"
-        - "traefik.http.routers.kitchenowl.entrypoints=websecure"
-        - "traefik.http.routers.registry.tls=true"
-        #- "traefik.http.routers.registry.tls.certresolver=selfsigned"
-        - "traefik.http.routers.kitchenowl.service=kitchenowl"
+        - "traefik.http.routers.whoami.rule=Host(`meals.itslit`)"
+        - "traefik.http.routers.whoami.entrypoints=web,websecure"
 
 networks:
   traefik_proxy:
