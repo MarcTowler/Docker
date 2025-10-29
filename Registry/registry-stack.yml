@@ -7,6 +7,7 @@ services:
       - traefik_proxy
     volumes:
       - /mnt/data/registry:/var/lib/registry
+    co
     deploy:
       placement:
         constraints:
@@ -15,7 +16,9 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.registry.rule=Host(`registry.itslit`)"
         - "traefik.http.services.registry.loadbalancer.server.port=5000"
-        - "traefik.http.routers.registry.entrypoints=web"
+        - "traefik.http.routers.registry.entrypoints=websecure"
+        - "traefik.http.routers.registry.tls=true"
+        - "traefik.http.routers.registry.tls.certresolver=selfsigned"
         - "traefik.http.routers.registry.service=registry"
 
 networks:
