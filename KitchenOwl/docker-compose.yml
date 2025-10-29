@@ -10,10 +10,9 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.KitchenOwl.rule=Host(`meals.itslit`)"
-        - "traefik.http.routers.KitchenOwl.entrypoints=web,websecure"
+        - "traefik.http.routers.kitchenowl.rule=Host(`meals.itslit`)"
         - "traefik.http.services.kitchenowl.loadbalancer.server.port=8080"
-        - "traefik.http.routers.KitchenOwl.tls=true"
+        - "traefik.http.routers.kitchenowl.entrypoints=web"
         - "traefik.http.routers.kitchenowl.service=kitchenowl"
 networks:
   traefik_proxy:
