@@ -1,4 +1,0 @@
-tls:
-  certificates:
-    - certFile: /certs/_wildcard.itslit+1.pem
-      keyFile: /certs/_wildcard.itslit+1-key.pem
