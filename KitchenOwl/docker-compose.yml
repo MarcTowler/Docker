@@ -16,5 +16,4 @@ services:
         - "traefik.http.routers.kitchenowl.service=kitchenowl"
 networks:
   traefik_proxy:
-    driver: overlay
     attachable: true
