@@ -19,5 +19,6 @@ services:
         - "traefik.http.routers.registry.service=registry"
 
 networks:
-  traefik-public:
-    external: true
+  traefik_proxy:
+    driver: overlay
+    attachable: true
