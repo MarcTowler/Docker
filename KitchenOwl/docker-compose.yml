@@ -10,9 +10,8 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.whoami.rule=Host(`meals.itslit`)"
-        - "traefik.http.routers.whoami.entrypoints=web,websecure"
-
+        - "traefik.http.routers.KitchenOwl.rule=Host(`meals.itslit`)"
+        - "traefik.http.routers.KitchenOwl.entrypoints=web,websecure"
 networks:
   traefik_proxy:
     driver: overlay
