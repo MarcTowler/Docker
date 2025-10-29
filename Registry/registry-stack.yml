@@ -17,7 +17,7 @@ services:
         - "traefik.http.services.registry.loadbalancer.server.port=5000"
         - "traefik.http.routers.registry.entrypoints=websecure"
         - "traefik.http.routers.registry.tls=true"
-        - "traefik.http.routers.registry.tls.certresolver=selfsigned"
+        #- "traefik.http.routers.registry.tls.certresolver=selfsigned"
         - "traefik.http.routers.registry.service=registry"
 
 networks:
