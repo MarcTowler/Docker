@@ -16,5 +16,6 @@ services:
         - "traefik.http.routers.kitchenowl.service=kitchenowl"
 
 networks:
-  traefik-public:
-    external: true
+  traefik_proxy:
+    driver: overlay
+    attachable: true
