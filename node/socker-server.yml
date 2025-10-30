@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  socker-server:
+    image: registry.itslit:5000/nodews:latest
+    networks:
+      - traefik_proxy
+    deploy:
+      mode: replicated
+      replicas: 2
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.nodews.rule=Host(`wss.itslit`)"
+        - "traefik.http.routers.nodews.tls=true"
+        - "traefik.http.services.nodews.loadbalancer.server.port=8000"
+        - "traefik.http.routers.nodews.service=nodews"
+networks:
+  traefik_proxy:
+    attachable: true
+    external: true
