@@ -1,6 +1,6 @@
 services:
   traefik:
-    image: traefik:v3.4
+    image: traefik:v3.5.4
 
     networks:
     # Connect to the 'traefik_proxy' overlay network for inter-container communication across nodes
@@ -95,24 +95,6 @@ services:
 
         # Service hint
         - "traefik.http.services.traefik.loadbalancer.server.port=8080"
-
-  # Deploy the Whoami application
-  whoami:
-    image: traefik/whoami
-    networks:
-      - traefik_proxy
-    deploy:
-      labels:
-        # Enable Service discovery for Traefik
-        - "traefik.enable=true"
-        # Define the WHoami router rule
-        - "traefik.http.routers.whoami.rule=Host(`whoami.itslit`)"
-        # Expose Whoami on the HTTPS entrypoint
-        - "traefik.http.routers.whoami.entrypoints=websecure"
-        # Enable TLS
-        - "traefik.http.routers.whoami.tls=true"
-        # Expose the whoami port number to Traefik
-        - traefik.http.services.whoami.loadbalancer.server.port=80
 
 # Define the overlay network for Swarm
 networks:
