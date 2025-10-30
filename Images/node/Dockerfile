@@ -13,6 +13,8 @@ WORKDIR /usr/app
 # Copy package files and install deps
 COPY package*.json ./
 RUN npm install
+RUN npm install -g nodemon
+RUN npm install --save ws
 
 # Copy the rest of the application code (including server.js)
 COPY . .
