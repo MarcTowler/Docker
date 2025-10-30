@@ -19,9 +19,11 @@ services:
         - "traefik.http.services.kitchenowl.loadbalancer.server.port=8080"
         - "traefik.http.routers.kitchenowl.entrypoints=websecure"
         - "traefik.http.routers.kitchenowl.service=kitchenowl"
-volumes:
-  - kitchenowl_data:/data
+    volumes:
+      - kitchenowl_data:/data
 networks:
   traefik_proxy:
     attachable: true
     external: true
+volumes:    # <-- top-level volumes must be a mapping
+  kitchenowl_data:
