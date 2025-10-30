@@ -5,6 +5,8 @@ services:
     image: tombursch/kitchenowl:latest
     environment:
       - TZ=Europe/London
+      - BASE_URL=https://meals.itslit
+      - API_URL=https://meals.itslit/api
     networks:
       - traefik_proxy
     deploy:
