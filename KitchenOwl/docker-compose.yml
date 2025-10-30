@@ -7,6 +7,8 @@ services:
       - TZ=Europe/London
       - BASE_URL=https://meals.itslit
       - API_URL=https://meals.itslit/api
+      - JWT_SECRET=itslitmediaanddevelopmentkitchenowlsecret
+      - DATABASE_URL=sqlite:///data/database.db
     networks:
       - traefik_proxy
     deploy:
@@ -17,6 +19,8 @@ services:
         - "traefik.http.services.kitchenowl.loadbalancer.server.port=8080"
         - "traefik.http.routers.kitchenowl.entrypoints=websecure"
         - "traefik.http.routers.kitchenowl.service=kitchenowl"
+volumes:
+  - kitchenowl_data:/data
 networks:
   traefik_proxy:
     attachable: true
