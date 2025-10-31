@@ -15,7 +15,7 @@ services:
         - "traefik.swarm.network=traefik_proxy"
         - "traefik.http.routers.nodews.rule=Host(`wss.itslit`)"
         - "traefik.http.routers.nodews.tls=true"
-        - "traefik.http.services.nodews.loadbalancer.server.port=8000"
+        - "traefik.http.services.nodews.loadbalancer.server.port=8080"
         - "traefik.http.routers.nodews.service=nodews"
     volumes:
       - ./Socket-Server:/usr/app/src
