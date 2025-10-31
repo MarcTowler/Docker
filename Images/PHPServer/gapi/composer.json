@@ -13,11 +13,11 @@
     }
   ],
   "require": {
-    "php": ">=7.1.0",
-    "guzzlehttp/guzzle": "~6.0"
+    "php": ">=7.0",
+    "guzzlehttp/guzzle": "~6.0",
+    "phpunit/phpunit": "^9.5"
   },
   "require-dev": {
-    "phpunit/phpunit": "^5.7",
     "phpstan/phpstan": ">=0.9.1",
     "codeclimate/php-test-reporter": "^0.4"
   },
@@ -27,9 +27,11 @@
       "API\\Library\\": "src/Library",
       "API\\Controllers\\": "src/Application/Controllers",
       "API\\Model\\": "src/Application/Model",
-      "API\\Exceptions\\": "src/Library/Exceptions",
-      "API\\Exceptions\\Destiny\\": "src/Library/Exceptions/Destiny"
+      "API\\Library\\Exceptions\\": "src/Library/Exceptions"
     }
+  },
+  "scripts": {
+    "test": ".\\vendor\\bin\\phpunit --testdox"
   },
   "autoload-dev": {
     "psr-4": {
