@@ -3,6 +3,8 @@ version: "3.8"
 services:
   socker-server:
     image: registry.itslit:5000/nodews:latest
+    command: nodemon src/server.js
+    restart: unless-stopped
     networks:
       - traefik_proxy
     deploy:
@@ -15,6 +17,8 @@ services:
         - "traefik.http.routers.nodews.tls=true"
         - "traefik.http.services.nodews.loadbalancer.server.port=8000"
         - "traefik.http.routers.nodews.service=nodews"
+    volumes:
+      - ./Socket-Server:/usr/app/src
 networks:
   traefik_proxy:
     attachable: true
