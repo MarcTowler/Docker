@@ -1,0 +1,88 @@
+version: "3.8"
+
+services:
+  api:
+    image: registry.itslit:5000/api:latest
+    networks:
+      - traefik_proxy
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.api.rule=Host(`api.itslit`)"
+        - "traefik.http.routers.api.tls=true"
+        - "traefik.http.services.api.loadbalancer.server.port=80"
+    volumes:
+      - ./php/api/:/var/www/html/api/
+  gapi:
+    image: registry.itslit:5000/gapi:latest
+    networks:
+      - traefik_proxy
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.gapi.rule=Host(`gapi.itslit`)"
+        - "traefik.http.routers.gapi.tls=true"
+        - "traefik.http.services.gapi.loadbalancer.server.port=80"
+    volumes:
+      - ./php/gapi/:/var/www/html/gapi/
+  rpgsite:
+    image: registry.itslit:5000/rpgsite:latest
+    networks:
+      - traefik_proxy
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.rpgsite.rule=Host(`rpgsite.itslit`)"
+        - "traefik.http.routers.rpgsite.tls=true"
+        - "traefik.http.services.rpgsite.loadbalancer.server.port=80"
+    volumes:
+      - ./php/RPG-Site/:/var/www/html/rpg/
+  website:
+    image: registry.itslit:5000/website:latest
+    networks:
+      - traefik_proxy
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.website.rule=Host(`site.itslit`)"
+        - "traefik.http.routers.website.tls=true"
+        - "traefik.http.services.website.loadbalancer.server.port=80"
+    volumes:
+      - ./php/Website/:/var/www/html/site/
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      #MYSQL_DATABASE: "${MYSQL_DATABASE}"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.website.rule=Host(`db.itslit`)"
+        - "traefik.http.routers.website.tls=true"
+        - "traefik.http.services.website.loadbalancer.server.port=3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./mysql/init-sql:/docker-entrypoint-initdb.d/:ro
+    networks:
+      - traefik_proxy
+networks:
+  traefik_proxy:
+    attachable: true
+    external: true
