@@ -14,7 +14,7 @@
 
 REGISTRY_URL="https://registry.itslit"
 CONFIG_PATH="/etc/docker/registry/config.yml"
-CONTAINER_NAME="registry_registry_1"  # change if your container name differs
+CONTAINER_NAME="registry_registry"  # change if your container name differs
 CERT_OPT="-k"  # remove if you have valid CA-signed certs
 
 list_images() {
