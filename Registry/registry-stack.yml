@@ -10,6 +10,7 @@ services:
     environment:
       - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/local.crt
       - REGISTRY_HTTP_TLS_KEY=/certs/local.key
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
     volumes:
       - ./registry:/var/lib/registry
       - ./config/config.yml:/etc/docker/registry/config.yml

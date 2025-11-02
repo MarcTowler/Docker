@@ -1,17 +1,35 @@
 version: 0.1
 log:
+  accesslog:
+    disabled: false
+  level: info
+  formatter: text
   fields:
     service: registry
+    environment: production
 
 storage:
-  delete:
-    enabled: true
-  cache:
-    blobdescriptor: inmemory
   filesystem:
     rootdirectory: /var/lib/registry
+  delete:
+    enabled: true
 
 http:
-  addr: :5000 # ChangeMe
+  addr: :5000
   headers:
     X-Content-Type-Options: [nosniff]
+  tls:
+    certificate: /certs/local.crt
+    key: /certs/local.key
+
+# Proxy configuration for pull-through caching
+proxy:
+  remoteurl: https://registry-1.docker.io
+  # Optional: authenticate to Docker Hub to avoid rate limits
+  # username: your_dockerhub_username
+  # password: your_dockerhub_access_token
+
+# Optional: tune cache behavior
+# health:
+#   storagedriver:
+#     enabled: true
