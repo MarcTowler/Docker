@@ -5,7 +5,7 @@ set -e
 ADMIN_PASS=$(openssl rand -base64 24)
 
 # Generate the Argon2 hash inside a Vaultwarden container
-ADMIN_HASH=$(docker run --rm --entrypoint /usr/local/bin/vaultwarden vaultwarden/server hash <<< "$ADMIN_PASS")
+ADMIN_HASH=$(docker run --rm --entrypoint /vaultwarden vaultwarden/server hash <<< "$ADMIN_PASS")
 
 echo "🔐 Vaultwarden admin credentials generated:"
 echo "------------------------------------------"
