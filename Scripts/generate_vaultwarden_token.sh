@@ -16,7 +16,12 @@ ADMIN_PASS=$(openssl rand -base64 24)
 echo "🔐 Generated admin password: $ADMIN_PASS"
 
 # 2️⃣ Generate Argon2id hash using Vaultwarden container
-ADMIN_HASH=$(docker run -it --rm vaultwarden/server hash <<< "$ADMIN_PASS" | tail -n1)
+# 2️⃣ Generate Argon2id hash non-interactively
+ADMIN_HASH=$(docker run --rm alpine sh -c "
+  apk add --no-cache argon2 >/dev/null
+  SALT=\$(openssl rand -base64 16)
+  echo '$ADMIN_PASS' | argon2 \"\$SALT\" -id -t 2 -m 16 -p 1 | grep 'Encoded:' | awk '{print \$2}'
+")
 echo "✅ Generated Argon2id hash for Vaultwarden"
 
 # 3️⃣ Create / update Swarm secret
