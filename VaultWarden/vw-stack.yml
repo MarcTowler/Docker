@@ -1,0 +1,27 @@
+services:
+  vaultwarden:
+    image: registry.itslit/library/vaultwarden/server:latest
+    networks:
+      - traefik_proxy
+    environment:
+      - WEBSOCKET_ENABLED: "true"
+      - SIGNUPS_ALLOWED: "true"
+      - ADMIN_TOKEN: "itslitadmintoken"
+      - DOMAIN: "https://vault.itslit"
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.vaultwarden.rule=Host(`vault.itslit`)"
+        - "traefik.http.routers.vaultwarden.tls=true"
+        - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+        - "traefik.http.routers.vaultwarden-websocket.rule=Host(`vault.itslit`)"
+        - "traefik.http.routers.vaultwarden-websocket.entrypoints=websecure"
+        - "traefik.http.routers.vaultwarden-websocket.service=vaultwarden-websocket-service"
+        - "traefik.http.routers.vaultwarden-websocket.middlewares=vaultwarden-websocket-header"
+        - "traefik.http.services.vaultwarden-websocket-service.loadbalancer.server.port=3012"
+        - "traefik.http.middlewares.vaultwarden-websocket-header.headers.customrequestheaders.X-Forwarded-Proto=https"
+    volumes:
+      - ./vw-data/:/data/

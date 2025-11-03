@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   api:
-    image: registry.itslit:5000/api:latest
+    image: registry.itslit/api:latest
     networks:
       - traefik_proxy
     deploy:
@@ -17,7 +17,7 @@ services:
     volumes:
       - ./php/api/:/var/www/html/api/
   gapi:
-    image: registry.itslit:5000/gapi:latest
+    image: registry.itslit/gapi:latest
     networks:
       - traefik_proxy
     deploy:
@@ -32,7 +32,7 @@ services:
     volumes:
       - ./php/gapi/:/var/www/html/gapi/
   rpgsite:
-    image: registry.itslit:5000/rpgsite:latest
+    image: registry.itslit/rpgsite:latest
     networks:
       - traefik_proxy
     deploy:
@@ -47,7 +47,7 @@ services:
     volumes:
       - ./php/RPG-Site/:/var/www/html/rpg/
   website:
-    image: registry.itslit:5000/website:latest
+    image: registry.itslit/website:latest
     networks:
       - traefik_proxy
     deploy:
@@ -62,7 +62,7 @@ services:
     volumes:
       - ./php/Website/:/var/www/html/site/
   mysql:
-    image: mysql:8.0
+    image: registry.itslit/library/mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_USER: "${MYSQL_USER}"
