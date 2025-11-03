@@ -3,10 +3,13 @@ services:
     image: vaultwarden/server:latest
     networks:
       - traefik_proxy
+    secrets:
+      - source: vaultwarden_admin_token
+        target: admin_token
     environment:
+      ADMIN_TOKEN_FILE: /run/secrets/admin_token
       WEBSOCKET_ENABLED: "true"
       SIGNUPS_ALLOWED: "true"
-      ADMIN_TOKEN: "${ADMIN_TOKEN}"
       DOMAIN: "https://vault.itslit"
       ROCKET_PORT: "80"
     volumes:
