@@ -41,6 +41,9 @@ services:
 
     # Vaultwarden logs & data persist
     configs: []  
+secrets:
+  vaultwarden_admin_token:
+    external: true
 volumes:
   vaultwarden-data:
     driver: local
