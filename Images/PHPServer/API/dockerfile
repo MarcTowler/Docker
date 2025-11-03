@@ -13,7 +13,7 @@ RUN docker-php-ext-install mysqli pdo pdo_mysql && apt-get update && apt-get ins
     zip \
     p7zip-full
 
-COPY --from=composer:2.4 /usr/bin/composer /usr/bin/composer
+COPY --from=registry.itslit/library/composer:2.4 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html/api
 COPY ./composer.json ./
