@@ -1,6 +1,6 @@
 services:
   vaultwarden:
-    image: registry.itslit/vaultwarden/server:latest
+    image: vaultwarden/server:latest
     networks:
       - traefik_proxy
     environment:
