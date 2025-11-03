@@ -4,10 +4,10 @@ services:
     networks:
       - traefik_proxy
     environment:
-      - WEBSOCKET_ENABLED: "true"
-      - SIGNUPS_ALLOWED: "true"
-      - ADMIN_TOKEN: "itslitadmintoken"
-      - DOMAIN: "https://vault.itslit"
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=true
+      - ADMIN_TOKEN=itslitadmintoken
+      - DOMAIN=https://vault.itslit
     deploy:
       mode: replicated
       replicas: 1
