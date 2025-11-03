@@ -2,8 +2,8 @@
 # ==========================================================
 # deploy_vaultwarden.sh
 # ----------------------------------------------------------
-# Generates a secure random Vaultwarden admin password,
-# hashes it, creates a Swarm secret, and deploys the stack.
+# Generates a secure Vaultwarden admin token,
+# creates/updates a Swarm secret, and deploys the stack.
 # ==========================================================
 set -euo pipefail
 
@@ -11,33 +11,29 @@ STACK_NAME="vaultwarden"
 COMPOSE_FILE="vw-stack.yml"
 SECRET_NAME="vaultwarden_admin_token"
 
-# 1️⃣ Generate random admin password
-ADMIN_PASS=$(openssl rand -base64 24)
-echo "🔐 Generated admin password: $ADMIN_PASS"
+# 1️⃣ Generate a secure random admin token (32 chars)
+ADMIN_TOKEN=$(openssl rand -base64 32)
+echo "🔐 Generated admin token: $ADMIN_TOKEN"
 
-# 2️⃣ Generate Argon2id hash using Vaultwarden container
-# 2️⃣ Generate Argon2id hash non-interactively
-ADMIN_HASH=$(docker run --rm alpine sh -c "
-  apk add --no-cache argon2 >/dev/null
-  SALT=\$(openssl rand -base64 16)
-  echo '$ADMIN_PASS' | argon2 \"\$SALT\" -id -t 2 -m 16 -p 1 | grep 'Encoded:' | awk '{print \$2}'
-")
-echo "✅ Generated Argon2id hash for Vaultwarden"
+# 2️⃣ Save token to temporary file
+TMP_FILE=$(mktemp)
+echo "$ADMIN_TOKEN" > "$TMP_FILE"
 
-# 3️⃣ Create / update Swarm secret
+# 3️⃣ Create or update Swarm secret
 if docker secret ls --format '{{.Name}}' | grep -q "^${SECRET_NAME}$"; then
     echo "♻️  Removing existing secret..."
     docker secret rm "$SECRET_NAME"
 fi
 
-echo "$ADMIN_HASH" | docker secret create "$SECRET_NAME" -
+docker secret create "$SECRET_NAME" "$TMP_FILE"
+rm "$TMP_FILE"
 echo "✅ Swarm secret '$SECRET_NAME' created"
 
-# 4️⃣ Deploy / update stack
+# 4️⃣ Deploy the stack
 echo "🚀 Deploying Vaultwarden stack..."
 docker stack deploy -c "$COMPOSE_FILE" "$STACK_NAME"
 
 echo
 echo "🎉 Deployment complete!"
-echo "Use the following admin password to log in at https://vault.itslit/admin"
-echo "$ADMIN_PASS"
+echo "Use the following admin token to log in at https://vault.itslit/admin"
+echo "$ADMIN_TOKEN"
