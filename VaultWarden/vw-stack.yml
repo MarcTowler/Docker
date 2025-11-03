@@ -4,11 +4,11 @@ services:
     networks:
       - traefik_proxy
     environment:
-      - WEBSOCKET_ENABLED=true
-      - SIGNUPS_ALLOWED=true
-      - ADMIN_TOKEN=${ADMIN_TOKEN}
-      - DOMAIN=https://vault.itslit
-      - ROCKET_PORT=80
+      WEBSOCKET_ENABLED: "true"
+      SIGNUPS_ALLOWED: "true"
+      ADMIN_TOKEN: "${ADMIN_TOKEN}"
+      DOMAIN: "https://vault.itslit"
+      ROCKET_PORT: "80"
     volumes:
       - vaultwarden-data:/data 
     deploy:
