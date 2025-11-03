@@ -25,3 +25,7 @@ services:
         - "traefik.http.middlewares.vaultwarden-websocket-header.headers.customrequestheaders.X-Forwarded-Proto=https"
     volumes:
       - ./vw-data/:/data/
+networks:
+  traefik_proxy:
+    attachable: true
+    external: true
