@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   socker-server:
-    image: registry.itslit:5000/nodews:latest
+    image: registry.itslit/nodews:latest
     command: nodemon src/server.js
     restart: unless-stopped
     networks:
