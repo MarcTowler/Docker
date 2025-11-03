@@ -9,8 +9,6 @@ services:
       - ADMIN_TOKEN=${ADMIN_TOKEN}
       - DOMAIN=https://vault.itslit
       - ROCKET_PORT=80
-    networks:
-      - traefik-proxy
     deploy:
       mode: replicated
       replicas: 1
