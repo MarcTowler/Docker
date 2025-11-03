@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  socket-server:
+    image: registry.itslit/nodews:latest
+    command: nodemon src/server.js
+    restart: unless-stopped
+    networks:
+      - traefik_proxy
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik_proxy"
+        - "traefik.http.routers.nodews.rule=Host(`wss.itslit`)"
+        - "traefik.http.routers.nodews.tls=true"
+        - "traefik.http.services.nodews.loadbalancer.server.port=8080"
+        - "traefik.http.routers.nodews.service=nodews"
+    volumes:
+      - ./Socket-Server:/usr/app/src
+networks:
+  traefik_proxy:
+    attachable: true
+    external: true
