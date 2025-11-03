@@ -6,19 +6,38 @@ services:
     environment:
       - WEBSOCKET_ENABLED=true
       - SIGNUPS_ALLOWED=true
-      - ADMIN_TOKEN=itslitadmintoken
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
       - DOMAIN=https://vault.itslit
+      - ROCKET_PORT=80
+    networks:
+      - traefik-proxy
     deploy:
       mode: replicated
       replicas: 1
       labels:
         - "traefik.enable=true"
         - "traefik.swarm.network=traefik_proxy"
+
+        # --- HTTP → HTTPS redirect ---
+        - "traefik.http.routers.vaultwarden-insecure.rule=Host(`vault.itslit`)"
+        - "traefik.http.routers.vaultwarden-insecure.entrypoints=web"
+        - "traefik.http.routers.vaultwarden-insecure.middlewares=redirect-to-https@file"
+
+        # --- HTTPS router ---
         - "traefik.http.routers.vaultwarden.rule=Host(`vault.itslit`)"
+        - "traefik.http.routers.vaultwarden.entrypoints=websecure"
         - "traefik.http.routers.vaultwarden.tls=true"
+
+        # --- Traefik service ---
         - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
-    volumes:
-      - ./vw-data/:/data/
+
+        - "traefik.http.routers.registry.service=vaultwarden"
+
+    # Vaultwarden logs & data persist
+    configs: []
+    secrets: []    
+volumes:
+  vaultwarden-data:
 networks:
   traefik_proxy:
     attachable: true
