@@ -10,27 +10,23 @@ log:
     environment: production
 
 storage:
-  cache:
-    blobdescriptor: inmemory
   filesystem:
     rootdirectory: /var/lib/registry
   delete:
     enabled: true
+  cache:
+    blobdescriptor: inmemory
 
 http:
   addr: :5000
   headers:
     X-Content-Type-Options: [nosniff]
-  # Uncomment if you have certs mounted
+  # Uncomment if you want TLS
   #tls:
   #  certificate: /certs/local.crt
   #  key: /certs/local.key
 
-# Enable pull-through caching *only* for images that don’t exist locally
+# Pull-through caching for images that are not present locally
 proxy:
   remoteurl: https://registry-1.docker.io
-  # Optional credentials for Docker Hub
-  # username: your_dockerhub_username
-  # password: your_dockerhub_access_token
-  # Cache path separated from local images
   ttl: 168h

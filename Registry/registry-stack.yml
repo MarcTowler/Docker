@@ -5,17 +5,12 @@ services:
     image: registry:2
     networks:
       - traefik_proxy
-    #ports:
-    #  - "5000:5000"
     environment:
-      #- REGISTRY_HTTP_TLS_CERTIFICATE=/certs/local.crt
-      #- REGISTRY_HTTP_TLS_KEY=/certs/local.key
       - REGISTRY_HTTP_ADDR=:5000
       - REGISTRY_STORAGE_DELETE_ENABLED=true
     volumes:
       - ./registry:/var/lib/registry
       - ./config/config.yml:/etc/docker/registry/config.yml
-      #- ../Traefik/certs:/certs:ro
     deploy:
       placement:
         constraints:
@@ -28,6 +23,7 @@ services:
         - "traefik.http.routers.registry.entrypoints=websecure"
         - "traefik.http.routers.registry.tls=true"
         - "traefik.http.routers.registry.service=registry"
+
   registry_mirror:
     image: docker:27.3.1
     command: ["/bin/sh", "-c", "/scripts/mirror-images.sh"]
@@ -40,10 +36,11 @@ services:
           - node.hostname == growlithe
       labels:
         - "swarm.cronjob.enable=true"
-        - "swarm.cronjob.schedule=0 2 * * *"
+        - "swarm.cronjob.schedule=0 2 * * *" # nightly at 2 AM
         - "swarm.cronjob.skip-running=true"
     networks:
       - traefik_proxy
+
 networks:
   traefik_proxy:
     attachable: true
