@@ -62,7 +62,7 @@ services:
     volumes:
       - ./php/Website/:/var/www/html/site/
   mysql:
-    image: registry.itslit/library/mysql:8.0
+    image: registry.itslit/mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       MYSQL_USER: "${MYSQL_USER}"
