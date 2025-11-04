@@ -27,12 +27,17 @@ services:
         # --- HTTP → HTTPS redirect ---
         - "traefik.http.routers.vaultwarden-insecure.rule=Host(`vault.itslit`)"
         - "traefik.http.routers.vaultwarden-insecure.entrypoints=web"
-        - "traefik.http.routers.vaultwarden-insecure.middlewares=redirect-to-https@file"
+        - "traefik.http.routers.vaultwarden-insecure.middlewares=test-redirectscheme"
 
         # --- HTTPS router ---
         - "traefik.http.routers.vaultwarden.rule=Host(`vault.itslit`)"
         - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+        - "traefik.http.routers.vaultwarden.middlewares=test-redirectscheme"
         - "traefik.http.routers.vaultwarden.tls=true"
+
+        # --- HTTP to HTTPS redirect middleware ---
+        - "traefik.http.middlewares.test-redirectscheme.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.test-redirectscheme.redirectscheme.permanent=true"
 
         # --- Traefik service ---
         - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
