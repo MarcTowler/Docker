@@ -28,22 +28,22 @@ services:
         - "traefik.http.routers.registry.entrypoints=websecure"
         - "traefik.http.routers.registry.tls=true"
         - "traefik.http.routers.registry.service=registry"
-    registry_mirror:
-      image: docker:27.3.1
-      command: ["/bin/sh", "-c", "/scripts/mirror-images.sh"]
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-        - ../Scripts/mirror-images.sh:/scripts/mirror-images.sh:ro
-      deploy:
-        placement:
-          constraints:
-            - node.hostname == growlithe
-        labels:
-          - "swarm.cronjob.enable=true"
-          - "swarm.cronjob.schedule=0 2 * * *"
-          - "swarm.cronjob.skip-running=true"
-      networks:
-        - traefik_proxy
+  registry_mirror:
+    image: docker:27.3.1
+    command: ["/bin/sh", "-c", "/scripts/mirror-images.sh"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../Scripts/mirror-images.sh:/scripts/mirror-images.sh:ro
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == growlithe
+      labels:
+        - "swarm.cronjob.enable=true"
+        - "swarm.cronjob.schedule=0 2 * * *"
+        - "swarm.cronjob.skip-running=true"
+    networks:
+      - traefik_proxy
 networks:
   traefik_proxy:
     attachable: true
