@@ -1,6 +1,6 @@
 services:
   vaultwarden:
-    image: vaultwarden/server:latest
+    image: registry.itslit/vaultwarden/server:latest
     networks:
       - traefik_proxy
     secrets:
