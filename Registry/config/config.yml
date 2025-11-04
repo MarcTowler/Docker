@@ -21,12 +21,8 @@ http:
   addr: :5000
   headers:
     X-Content-Type-Options: [nosniff]
-  # Uncomment if you want TLS
-  #tls:
-  #  certificate: /certs/local.crt
-  #  key: /certs/local.key
 
-# Pull-through caching for images that are not present locally
+# Pull-through proxy ONLY for library/ namespace
 proxy:
   remoteurl: https://registry-1.docker.io
   ttl: 168h

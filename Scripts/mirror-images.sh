@@ -1,7 +1,13 @@
 #!/bin/sh
+# mirror-images.sh
+# Sync selected Docker Hub images into your local registry
+
 set -e
 
-REGISTRY="registry.itslit"
+# Local namespace in your registry
+LOCAL_REGISTRY="registry.itslit"
+
+# List of images to mirror (Docker Hub format)
 IMAGES="
 mysql:8.0
 php:8.1-apache
@@ -14,23 +20,18 @@ vaultwarden/server:latest
 echo "=== Starting registry mirror sync at $(date) ==="
 
 for IMAGE in $IMAGES; do
-  SRC="docker.io/library/${IMAGE}"
-  DEST="${REGISTRY}/${IMAGE#library/}"
+  # Pull from Docker Hub (via pull-through)
+  echo "Pulling docker.io/$IMAGE ..."
+  docker pull "docker.io/$IMAGE"
 
-  # Skip if already in registry
-  if curl -fsSL "https://${REGISTRY}/v2/${IMAGE#library/}/manifests/${IMAGE##*:}" >/dev/null 2>&1; then
-    echo "[Skip] ${DEST} already exists in registry"
-    continue
-  fi
+  # Retag to your local registry
+  LOCAL_IMAGE="${LOCAL_REGISTRY}/$(basename $(echo $IMAGE | cut -d/ -f2-))"
+  echo "Retagging $IMAGE -> $LOCAL_IMAGE ..."
+  docker tag "$IMAGE" "$LOCAL_IMAGE"
 
-  echo "[Pull] ${SRC}"
-  docker pull "${SRC}"
-
-  echo "[Tag] ${SRC} -> ${DEST}"
-  docker tag "${SRC}" "${DEST}"
-
-  echo "[Push] ${DEST}"
-  docker push "${DEST}"
+  # Push into local registry
+  echo "Pushing $LOCAL_IMAGE ..."
+  docker push "$LOCAL_IMAGE"
 done
 
 echo "=== Mirror sync complete at $(date) ==="
