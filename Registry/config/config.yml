@@ -10,19 +10,14 @@ log:
     environment: production
 
 storage:
+  cache:
+    blobdescriptor: inmemory
   filesystem:
     rootdirectory: /var/lib/registry
   delete:
     enabled: true
-  cache:
-    blobdescriptor: inmemory
 
 http:
   addr: :5000
   headers:
     X-Content-Type-Options: [nosniff]
-
-# Pull-through proxy ONLY for library/ namespace
-proxy:
-  remoteurl: https://registry-1.docker.io
-  ttl: 168h

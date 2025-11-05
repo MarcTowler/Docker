@@ -29,6 +29,7 @@ services:
     command: ["/bin/sh", "-c", "/scripts/mirror-images.sh"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./registry:/var/lib/registry       # access logs & persistence
       - ../Scripts/mirror-images.sh:/scripts/mirror-images.sh:ro
     deploy:
       placement:
@@ -36,7 +37,7 @@ services:
           - node.hostname == growlithe
       labels:
         - "swarm.cronjob.enable=true"
-        - "swarm.cronjob.schedule=0 2 * * *"  # nightly at 02:00
+        - "swarm.cronjob.schedule=0 2 * * *"
         - "swarm.cronjob.skip-running=true"
     networks:
       - traefik_proxy
