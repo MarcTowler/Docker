@@ -4,15 +4,15 @@ services:
   registry:
     image: registry:2
     networks:
-      traefik_proxy:
-        aliases:
-          - registry
+      - traefik_proxy
     environment:
-      - REGISTRY_HTTP_ADDR=:5000
+      - REGISTRY_HTTP_ADDR=:443
       - REGISTRY_STORAGE_DELETE_ENABLED=true
     volumes:
       - ./registry:/var/lib/registry
       - ./config/config.yml:/etc/docker/registry/config.yml
+      - ./certs/wildcard.crt:/certs/wildcard.crt:ro
+      - ./certs/wildcard.key:/certs/wildcard.key:ro
     deploy:
       placement:
         constraints:
@@ -21,19 +21,18 @@ services:
         - "traefik.enable=true"
         - "traefik.swarm.network=traefik_proxy"
         - "traefik.http.routers.registry.rule=Host(`registry.itslit`)"
-        - "traefik.http.services.registry.loadbalancer.server.port=5000"
+        - "traefik.http.services.registry.loadbalancer.server.port=443"
         - "traefik.http.routers.registry.entrypoints=websecure"
         - "traefik.http.routers.registry.tls=true"
         - "traefik.http.routers.registry.service=registry"
 
   registry_mirror:
-    image: alpine:3.18
+    image: docker:27.3.1
     command: ["/bin/sh", "-c", "/scripts/mirror-images.sh"]
-    environment:
-      - REGISTRY_URL=http://registry:5000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ../Scripts/mirror-images.sh:/scripts/mirror-images.sh:ro
+      - ./certs/wildcard.crt:/usr/local/share/ca-certificates/wildcard.crt:ro
     deploy:
       placement:
         constraints:
