@@ -1,60 +1,48 @@
 #!/bin/sh
-# mirror-images.sh — refresh images in the local registry nightly
+# mirror-images.sh
+# Update Docker Hub images in local registry nightly
 
 set -e
 
+REGISTRY="${REGISTRY:-https://registry.itslit}"  # local registry HTTPS
+TEMP_LIST="/tmp/repos.txt"
+
+# Ensure tools installed
+apk add --no-cache curl jq docker-cli ca-certificates
+
+update-ca-certificates
+
 echo "=== Starting registry mirror sync at $(date) ==="
 
-REGISTRY_URL="${REGISTRY_URL:-http://registry:5000}"
-
-echo "Installing curl, jq, and docker-cli..."
-apk add --no-cache curl jq docker-cli > /dev/null
-
-# Get list of repositories from the registry catalog
-REPOS=$(curl -s "${REGISTRY_URL}/v2/_catalog" | jq -r '.repositories[]?' || true)
+# Fetch all local registry repositories
+REPOS=$(curl -sk "${REGISTRY}/v2/_catalog" | jq -r '.repositories[]') || true
 
 if [ -z "$REPOS" ]; then
-  echo "⚠️  No repositories found in ${REGISTRY_URL}."
+  echo "⚠️  No repositories found in ${REGISTRY}."
   exit 0
 fi
 
 for REPO in $REPOS; do
-  echo "🔍 Checking repository: ${REPO}"
+  echo -e "\n🔍 Checking repository: $REPO"
 
-  TAGS=$(curl -s "${REGISTRY_URL}/v2/${REPO}/tags/list" | jq -r '.tags[]?' || true)
-  if [ -z "$TAGS" ]; then
-    echo "  ⚠️  No tags found for ${REPO}, skipping."
+  # Skip local-only repos (those not on Docker Hub)
+  HUB_REPO=$(echo "$REPO" | sed 's#^library/##')  # remove library prefix
+  if ! curl -sfI "https://hub.docker.com/v2/repositories/${HUB_REPO}/tags/latest" >/dev/null 2>&1; then
+    echo "  ⚠️  Skipping $REPO: not found on Docker Hub"
     continue
   fi
 
+  TAGS=$(curl -sf "https://hub.docker.com/v2/repositories/${HUB_REPO}/tags/?page_size=1" | jq -r '.results[].name')
+
   for TAG in $TAGS; do
-    LOCAL_IMAGE="${REGISTRY_URL#http://}/${REPO}:${TAG}"
+    echo "  🔄 Updating $REPO:$TAG..."
 
-    # Check image age (skip if < 24h old)
-    IMAGE_INFO=$(docker image inspect "$LOCAL_IMAGE" --format '{{.Metadata.LastTagTime}}' 2>/dev/null || true)
-    if [ -n "$IMAGE_INFO" ]; then
-      LAST_PULL=$(date -d "$IMAGE_INFO" +%s 2>/dev/null || echo 0)
-      NOW=$(date +%s)
-      AGE=$(( (NOW - LAST_PULL) / 3600 ))
-      if [ "$AGE" -lt 24 ]; then
-        echo "  ⏩ ${LOCAL_IMAGE} is less than 24h old — skipping..."
-        continue
-      fi
-    fi
+    docker pull "docker.io/$REPO:$TAG" || { echo "  ❌ Failed to pull $REPO:$TAG, skipping..."; continue; }
 
-    echo "  🔄 Updating ${REPO}:${TAG}..."
-    docker pull "${REPO}:${TAG}" || {
-      echo "  ❌ Failed to pull ${REPO}:${TAG}, skipping..."
-      continue
-    }
+    docker tag "docker.io/$REPO:$TAG" "${REGISTRY}/${REPO}:$TAG"
 
-    docker tag "${REPO}:${TAG}" "${REGISTRY_URL#http://}/${REPO}:${TAG}"
-    docker push "${REGISTRY_URL#http://}/${REPO}:${TAG}" || {
-      echo "  ❌ Failed to push ${REPO}:${TAG}, check registry status."
-      continue
-    }
-
-    echo "  ✅ Updated ${REPO}:${TAG}"
+    docker push --tlsverify=false "${REGISTRY}/${REPO}:$TAG" \
+      || echo "  ❌ Failed to push $REPO:$TAG, check registry status."
   done
 done
 
