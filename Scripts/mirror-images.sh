@@ -15,8 +15,8 @@ if ! command -v curl >/dev/null 2>&1; then
   apk add --no-cache curl jq docker-cli >/dev/null
 fi
 
-# Fetch repository list
-REPOS=$(curl -s ${REGISTRY_URL}/v2/_catalog | jq -r '.repositories[]' || true)
+# Fetch repository list (ignore cert errors for self-signed)
+REPOS=$(curl -ks ${REGISTRY_URL}/v2/_catalog | jq -r '.repositories[]' || true)
 
 if [ -z "$REPOS" ]; then
   echo "⚠️  No repositories found in ${REGISTRY_URL}."
@@ -27,7 +27,7 @@ fi
 for REPO in $REPOS; do
   echo "📦 Checking repository: ${REPO}"
 
-  TAGS=$(curl -s ${REGISTRY_URL}/v2/${REPO}/tags/list | jq -r '.tags[]' || true)
+  TAGS=$(curl -ks ${REGISTRY_URL}/v2/${REPO}/tags/list | jq -r '.tags[]' || true)
   if [ -z "$TAGS" ]; then
     echo "  ⚠️  No tags found for ${REPO}, skipping..."
     continue
