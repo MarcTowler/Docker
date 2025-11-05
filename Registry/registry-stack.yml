@@ -30,6 +30,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ../Scripts/mirror-images.sh:/scripts/mirror-images.sh:ro
+    environment:
+      - REGISTRY_URL=https://registry:5000   # internal alias
     deploy:
       placement:
         constraints:
@@ -40,8 +42,6 @@ services:
         - "swarm.cronjob.skip-running=true"
     networks:
       - traefik_proxy
-
-
 networks:
   traefik_proxy:
     attachable: true
