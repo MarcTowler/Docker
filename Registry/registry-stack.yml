@@ -45,6 +45,24 @@ services:
         - "swarm.cronjob.skip-running=true"
     networks:
       - traefik_proxy
+  registry_gc:
+    image: docker:27.3.1
+    command: ["/bin/sh", "-c", "apk add --no-cache bash && /scripts/registry-cleanup.sh"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../Scripts/registry-cleanup.sh:/scripts/registry-cleanup.sh:ro
+    deploy:
+      restart_policy:
+        condition: none
+      placement:
+        constraints:
+          - node.hostname == growlithe
+      labels:
+        - "swarm.cronjob.enable=true"
+        - "swarm.cronjob.schedule=0 3 * * 0"   # Every Sunday at 03:00
+        - "swarm.cronjob.skip-running=true"
+    networks:
+      - traefik_proxy
 
 
 networks:
