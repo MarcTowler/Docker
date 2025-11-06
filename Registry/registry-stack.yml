@@ -34,6 +34,8 @@ services:
       - ../Scripts/mirror-images.sh:/scripts/mirror-images.sh:ro
       - ./certs/wildcard.crt:/usr/local/share/ca-certificates/wildcard.crt:ro
     deploy:
+      restart_policy:
+        condition: none
       placement:
         constraints:
           - node.hostname == growlithe
@@ -43,6 +45,7 @@ services:
         - "swarm.cronjob.skip-running=true"
     networks:
       - traefik_proxy
+
 
 networks:
   traefik_proxy:
