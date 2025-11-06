@@ -1,4 +1,4 @@
-FROM registry.itslit/library/node:current-alpine
+FROM registry.itslit/node:current-alpine
 #FROM node:current-alpine
 
 WORKDIR /usr/app
