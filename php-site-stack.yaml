@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   api:
-    image: registry.itslit/api:latest
+    image: registry.itslit/library/api:latest
     networks:
       - traefik_proxy
     deploy:
@@ -16,8 +16,9 @@ services:
         - "traefik.http.services.api.loadbalancer.server.port=80"
     volumes:
       - ./php/api/:/var/www/html/api/
+
   gapi:
-    image: registry.itslit/gapi:latest
+    image: registry.itslit/library/gapi:latest
     networks:
       - traefik_proxy
     deploy:
@@ -31,8 +32,9 @@ services:
         - "traefik.http.services.gapi.loadbalancer.server.port=80"
     volumes:
       - ./php/gapi/:/var/www/html/gapi/
+
   rpgsite:
-    image: registry.itslit/rpgsite:latest
+    image: registry.itslit/library/rpgsite:latest
     networks:
       - traefik_proxy
     deploy:
@@ -46,8 +48,9 @@ services:
         - "traefik.http.services.rpgsite.loadbalancer.server.port=80"
     volumes:
       - ./php/RPG-Site/:/var/www/html/rpg/
+
   website:
-    image: registry.itslit/website:latest
+    image: registry.itslit/library/website:latest
     networks:
       - traefik_proxy
     deploy:
@@ -61,13 +64,19 @@ services:
         - "traefik.http.services.website.loadbalancer.server.port=80"
     volumes:
       - ./php/Website/:/var/www/html/site/
+
   mysql:
-    image: registry.itslit/mysql:8.0
+    image: registry.itslit/library/mysql:8.0
+    secrets:
+      - mysql_root_password
+      - mysql_user
+      - mysql_password
+      - mysql_database
     environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      MYSQL_USER: "${MYSQL_USER}"
-      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
-      #MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_USER_FILE: /run/secrets/mysql_user
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      MYSQL_DATABASE_FILE: /run/secrets/mysql_database
     deploy:
       mode: replicated
       replicas: 1
@@ -82,7 +91,21 @@ services:
       - ./mysql/init-sql:/docker-entrypoint-initdb.d/:ro
     networks:
       - traefik_proxy
+
 networks:
   traefik_proxy:
     attachable: true
+    external: true
+
+volumes:
+  mysqldata:
+
+secrets:
+  mysql_root_password:
+    external: true
+  mysql_user:
+    external: true
+  mysql_password:
+    external: true
+  mysql_database:
     external: true
