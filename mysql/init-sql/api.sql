@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `activation` (
   `act_key` varchar(255) NOT NULL,
   `expires` date NOT NULL,
   UNIQUE KEY `name` (`name`)
-) ENGINE=Aria;
+) ENGINE=InnoDB;
 
 -- --------------------------------------------------------
 
@@ -96,7 +96,7 @@ INSERT INTO `auth_token` (`id`, `name`, `token`, `level`) VALUES
 -- Table structure for table `blog_comments`
 --
 
-CREATE TABLE IF NOT EXISTS`blog_comments` (
+CREATE TABLE IF NOT EXISTS `blog_comments` (
   `id` int NOT NULL AUTO_INCREMENT, 
   `bid` int NOT NULL, 
   `response_id` int NOT NULL DEFAULT '0', 
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `codes` (
   `expiration` date NOT NULL,
   `redeemed_by` varchar(60) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=Aria;
+) ENGINE=InnoDB;
 
 -- --------------------------------------------------------
 
@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS `lists` (
   `list_name` varchar(255) NOT NULL,
   `owner` varchar(255) NOT NULL,
   PRIMARY KEY (`lid`)
-) ENGINE=Aria AUTO_INCREMENT=11;
+) ENGINE=InnoDB AUTO_INCREMENT=11;
 
 --
 -- Dumping data for table `lists`
@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS `list_items` (
   `name` varchar(255) NOT NULL,
   `info` text NOT NULL,
   PRIMARY KEY (`iid`)
-) ENGINE=Aria AUTO_INCREMENT=290;
+) ENGINE=InnoDB AUTO_INCREMENT=290;
 
 --
 -- Dumping data for table `list_items`
