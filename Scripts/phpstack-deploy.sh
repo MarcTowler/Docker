@@ -4,7 +4,7 @@ set -euo pipefail
 # === Project paths ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-STACK_FILE="$PROJECT_ROOT/php-stack-deploy.yaml"
+STACK_FILE="$PROJECT_ROOT/php-site-stack.yaml"
 STACK_NAME="phpstack"
 
 # === Vaultwarden configuration ===
@@ -20,6 +20,13 @@ echo "📄 Stack file: $STACK_FILE"
 
 # === Login & Unlock Vaultwarden ===
 echo "🔐 Logging in to Vaultwarden..."
+
+# If already logged in to a different server, logout first
+CURRENT_SERVER=$(bw config server | grep -Eo 'https?://[^[:space:]]+' || true)
+if [ "$CURRENT_SERVER" != "$VAULT_SERVER" ]; then
+  echo "🧹 Different server config detected — logging out first..."
+  bw logout || true
+fi
 bw config server "$VAULT_SERVER"
 bw login "$VAULT_USER" || true
 
