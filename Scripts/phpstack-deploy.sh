@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # === Configuration ===
-ITEM_NAME="MySQL Database (Production)"
+ITEM_NAME="MySQL"
 STACK_NAME="phpstack"
 STACK_FILE="php-site-stack.yml"
 
