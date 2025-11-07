@@ -5,25 +5,28 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 STACK_FILE="$PROJECT_ROOT/php-site-stack.yaml"
-PHP_DIR="/home/marctowler/Docker/php"
-STACK_NAME="phpstack"
+PHP_DIR="/home/marctowler/Docker/php"  # Local path (exported via NFS)
+STACK_NAME="itslit"
 
 # === Vaultwarden configuration ===
 ITEM_NAME="MySQL"
 VAULT_SERVER="https://vault.itslit"
 VAULT_USER="svc-docker@itslit"
 
-# === Allow self-signed certs (temporary measure) ===
+# === Allow self-signed certs (temporary) ===
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 
 echo "📁 Working directory: $PROJECT_ROOT"
 echo "📄 Stack file: $STACK_FILE"
+echo "📂 PHP source directory: $PHP_DIR"
 
-# === Ensure PHP directory exists ===
-mkdir -p "$PHP_DIR"
-cd "$PHP_DIR"
+# === Verify PHP folder exists ===
+if [ ! -d "$PHP_DIR" ]; then
+  echo "❌ PHP directory '$PHP_DIR' not found. Please check your NFS export or path."
+  exit 1
+fi
 
-# === Clone or update PHP projects ===
+# === Clone or update PHP projects (locally on NFS host) ===
 declare -A REPOS=(
   ["api"]="git@github.com:ItsLit-Media-and-Development/api.git"
   ["Website"]="git@github.com:ItsLit-Media-and-Development/Website.git"
@@ -32,19 +35,28 @@ declare -A REPOS=(
 )
 
 echo "🌀 Syncing PHP project repositories..."
+cd "$PHP_DIR"
+
 for dir in "${!REPOS[@]}"; do
   repo="${REPOS[$dir]}"
   if [ -d "$dir/.git" ]; then
     echo "🔁 Updating existing repo: $dir"
-    (cd "$dir" && git fetch origin && git reset --hard origin/main || git pull)
+    (
+      cd "$dir"
+      git fetch origin
+      DEFAULT_BRANCH=$(git remote show origin | awk '/HEAD branch/ {print $NF}')
+      echo "   ↳ Using default branch: $DEFAULT_BRANCH"
+      git reset --hard "origin/$DEFAULT_BRANCH" || git pull
+    )
   else
     echo "⬇️ Cloning new repo: $dir"
     git clone "$repo" "$dir"
   fi
 done
+
 echo "✅ PHP repositories up to date."
 
-# === Vaultwarden Login & Unlock ===
+# === Vaultwarden login & unlock ===
 echo "🔐 Logging in to Vaultwarden..."
 CURRENT_SERVER=$(bw config server | grep -Eo 'https?://[^[:space:]]+' || true)
 if [ "$CURRENT_SERVER" != "$VAULT_SERVER" ]; then
