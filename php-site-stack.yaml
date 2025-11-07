@@ -77,15 +77,17 @@ services:
       MYSQL_USER_FILE: /run/secrets/mysql_user
       MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
       MYSQL_DATABASE_FILE: /run/secrets/mysql_database
+    ports:
+     - target: 3306
+       published: 3306
+       protocol: tcp
+       mode: host
     deploy:
       mode: replicated
       replicas: 1
-      labels:
-        - "traefik.enable=true"
-        - "traefik.swarm.network=traefik_proxy"
-        - "traefik.http.routers.website.rule=Host(`db.itslit`)"
-        - "traefik.http.routers.website.tls=true"
-        - "traefik.http.services.website.loadbalancer.server.port=3306"
+      placement:
+        constraints:
+          - node.hostname == growlithe
     volumes:
       - mysqldata:/var/lib/mysql
       - /srv/itslit/mysql/init-sql:/docker-entrypoint-initdb.d/:ro
