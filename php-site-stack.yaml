@@ -15,7 +15,7 @@ services:
         - "traefik.http.routers.api.tls=true"
         - "traefik.http.services.api.loadbalancer.server.port=80"
     volumes:
-      - ./php/api/:/var/www/html/api/
+      - /srv/itslit/php/api/:/var/www/html/api/
 
   gapi:
     image: registry.itslit/library/gapi:latest
@@ -31,7 +31,7 @@ services:
         - "traefik.http.routers.gapi.tls=true"
         - "traefik.http.services.gapi.loadbalancer.server.port=80"
     volumes:
-      - ./php/gapi/:/var/www/html/gapi/
+      - /srv/itslit/php/gapi/:/var/www/html/gapi/
 
   rpgsite:
     image: registry.itslit/library/rpgsite:latest
@@ -47,7 +47,7 @@ services:
         - "traefik.http.routers.rpgsite.tls=true"
         - "traefik.http.services.rpgsite.loadbalancer.server.port=80"
     volumes:
-      - ./php/RPG-Site/:/var/www/html/rpg/
+      - /srv/itslit/php/RPG-Site/:/var/www/html/rpg/
 
   website:
     image: registry.itslit/library/website:latest
@@ -63,7 +63,7 @@ services:
         - "traefik.http.routers.website.tls=true"
         - "traefik.http.services.website.loadbalancer.server.port=80"
     volumes:
-      - ./php/Website/:/var/www/html/site/
+      - /srv/itslit/php/Website/:/var/www/html/site/
 
   mysql:
     image: registry.itslit/library/mysql:8.0
