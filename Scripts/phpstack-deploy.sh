@@ -6,6 +6,11 @@ ITEM_NAME="MySQL Database (Production)"
 STACK_NAME="phpstack"
 STACK_FILE="php-site-stack.yml"
 
+# === Allow self-signed certificate (temporary measure) ===
+# This disables TLS verification for Node.js (used by the Bitwarden CLI).
+# ⚠️ Only use this in a trusted network — replace with a proper CA later.
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+
 # === Login and Unlock Vaultwarden ===
 echo "🔐 Logging in to Vaultwarden..."
 bw login svc-docker@itslit || true  # skip if already logged in
