@@ -26,8 +26,9 @@ CURRENT_SERVER=$(bw config server | grep -Eo 'https?://[^[:space:]]+' || true)
 if [ "$CURRENT_SERVER" != "$VAULT_SERVER" ]; then
   echo "🧹 Different server config detected — logging out first..."
   bw logout || true
+  bw config server "$VAULT_SERVER"
 fi
-bw config server "$VAULT_SERVER"
+
 bw login "$VAULT_USER" || true
 
 echo "🔓 Unlocking vault..."
