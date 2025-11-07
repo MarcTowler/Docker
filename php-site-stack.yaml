@@ -85,7 +85,6 @@ services:
     command:
       [
         "mysqld",
-        "--innodb-file-format=Barracuda",
         "--innodb-file-per-table=1",
         "--innodb-large-prefix=ON",
         "--innodb-default-row-format=DYNAMIC"
