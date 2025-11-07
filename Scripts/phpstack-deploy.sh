@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 STACK_FILE="$PROJECT_ROOT/php-site-stack.yaml"
 PHP_DIR="/home/marctowler/Docker/php"  # Local path (exported via NFS)
-STACK_NAME="itslit"
+STACK_NAME="phpstack"
 
 # === Vaultwarden configuration ===
 ITEM_NAME="MySQL"

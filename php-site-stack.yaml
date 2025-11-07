@@ -88,7 +88,7 @@ services:
         - "traefik.http.services.website.loadbalancer.server.port=3306"
     volumes:
       - mysqldata:/var/lib/mysql
-      - ./mysql/init-sql:/docker-entrypoint-initdb.d/:ro
+      - /srv/itslit/mysql/init-sql:/docker-entrypoint-initdb.d/:ro
     networks:
       - traefik_proxy
 
