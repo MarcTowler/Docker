@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 STACK_FILE="$PROJECT_ROOT/php-site-stack.yaml"
-PHP_DIR="$PROJECT_ROOT/php"
+PHP_DIR="/srv/itslit/php"
 STACK_NAME="phpstack"
 
 # === Vaultwarden configuration ===
