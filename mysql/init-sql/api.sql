@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `api_users` (
   `SL_refresh_token` varchar(255) NOT NULL,
   `approved` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `username` (`username`(191))
+  UNIQUE KEY `username` (`username`)
 ) ENGINE=MyISAM AUTO_INCREMENT=2;
 
 --
@@ -124,8 +124,8 @@ CREATE TABLE IF NOT EXISTS `blog_post` (
   `updated_date` datetime DEFAULT CURRENT_TIMESTAMP,
   `published` tinyint DEFAULT '0',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `title_UNIQUE` (`title`(191)), 
-  UNIQUE KEY `slug_UNIQUE` (`slug`(191))
+  UNIQUE KEY `title_UNIQUE` (`title`), 
+  UNIQUE KEY `slug_UNIQUE` (`slug`)
 ) ENGINE=InnoDB;
 
 --
