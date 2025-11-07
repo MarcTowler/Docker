@@ -82,6 +82,14 @@ services:
        published: 3306
        protocol: tcp
        mode: host
+    command:
+      [
+        "mysqld",
+        "--innodb-file-format=Barracuda",
+        "--innodb-file-per-table=1",
+        "--innodb-large-prefix=ON",
+        "--innodb-default-row-format=DYNAMIC"
+      ]
     deploy:
       mode: replicated
       replicas: 1
