@@ -31,7 +31,7 @@ services:
         - "traefik.http.routers.gapi.tls=true"
         - "traefik.http.services.gapi.loadbalancer.server.port=80"
     volumes:
-      - /srv/itslit/php/gapi/:/var/www/html/gapi/
+      - /srv/itslit/php/GAPI/:/var/www/html/gapi/
 
   rpgsite:
     image: registry.itslit/library/rpgsite:latest
