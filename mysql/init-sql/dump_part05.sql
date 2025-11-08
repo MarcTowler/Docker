@@ -79,7 +79,7 @@ CREATE TABLE `redemption` (
   `channel` varchar(25) NOT NULL,
   `user` varchar(60) NOT NULL,
   `reward` int NOT NULL,
-  `date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+  `date` datetime NOT NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `given` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
