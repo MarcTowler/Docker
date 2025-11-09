@@ -176,43 +176,7 @@ LOCK TABLES `twitch_logs` WRITE;
 INSERT INTO `twitch_logs` VALUES (1,'synxiec','thespeakerbottest','ItsLittany','$querystring','2018-11-27 23:21:07','ban'),(2,'synxiec','thespeakerbottest','ItsLittany','thespeakerbottest being an asshat','2018-11-27 23:22:14','ban'),(3,'synxiec','thespeakerbottest','ItsLittany','being an asshat','2018-11-27 23:24:49','ban'),(4,'itslittany','thespeakerbottest','thespeakerbottest','a twat','2018-11-28 00:13:40','ban'),(5,'synxiec','skinnyseahorse','skinnyseahorse','today, Satan.','2018-12-27 00:58:01','ban'),(6,'synxiec','VADIKUS007','synxiec','no-no words','2018-12-27 05:20:27','ban'),(7,'synxiec','mosheddy','synxiec','harassment','2018-12-28 00:47:11','ban');
 /*!40000 ALTER TABLE `twitch_logs` ENABLE KEYS */;
 UNLOCK TABLES;
--- /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-09-28  0:48:08
 CREATE DATABASE  IF NOT EXISTS `marctowl_itslitapitest` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `marctowl_itslitapitest`;
--- MySQL dump 10.13  Distrib 8.0.34, for Win64 (x86_64)
---
--- Host: db.local    Database: marctowl_itslitapitest
--- ------------------------------------------------------
--- Server version	8.0.42
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
--- /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
--- /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2025-09-28  0:48:08
