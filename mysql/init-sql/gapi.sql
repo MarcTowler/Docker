@@ -28,7 +28,7 @@ USE `marctowl_gapi`;
 --
 -- Table structure for table `armour`
 --
-
+DROP TABLE IF EXISTS `armour`;
 CREATE TABLE IF NOT EXISTS `armour` (
   `aid` int(11) NOT NULL AUTO_INCREMENT,
   `iid` int(11) DEFAULT NULL,
@@ -70,7 +70,7 @@ INSERT INTO `armour` (`aid`, `iid`, `hp_mod`, `ap_mod`, `str_mod`, `def_mod`, `d
 --
 -- Table structure for table `auction`
 --
-
+DROP TABLE IF EXISTS `auction`;
 CREATE TABLE IF NOT EXISTS `auction` (
   `aid` int(3) NOT NULL,
   `iid` int(3) NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS `auction` (
 --
 -- Table structure for table `auction_bids`
 --
-
+DROP TABLE IF EXISTS `auction_bids`;
 CREATE TABLE IF NOT EXISTS `auction_bids` (
   `bid` int(10) NOT NULL,
   `aid` int(3) NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `auction_bids` (
 --
 -- Table structure for table `auth_token`
 --
-
+DROP TABLE IF EXISTS `auth_token`;
 CREATE TABLE IF NOT EXISTS `auth_token` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(60) NOT NULL,
@@ -124,7 +124,7 @@ INSERT INTO `auth_token` (`id`, `name`, `token`, `level`) VALUES
 --
 -- Table structure for table `bank`
 --
-
+DROP TABLE IF EXISTS `bank`;
 CREATE TABLE IF NOT EXISTS `bank` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `uid` int(11) DEFAULT NULL,
@@ -150,7 +150,7 @@ INSERT INTO `bank` (`id`, `uid`, `balance`, `protected`) VALUES
 --
 -- Table structure for table `class`
 --
-
+DROP TABLE IF EXISTS `class`;
 CREATE TABLE IF NOT EXISTS `class` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL,
@@ -244,7 +244,7 @@ INSERT INTO `class` (`id`, `name`, `level_req`, `class_req`, `str_mod`, `def_mod
 --
 -- Table structure for table `event`
 --
-
+DROP TABLE IF EXISTS `event`;
 CREATE TABLE IF NOT EXISTS `event` (
   `eid` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(180) NOT NULL,
@@ -271,7 +271,7 @@ INSERT INTO `event` (`eid`, `name`, `description`, `start_date`, `end_date`, `mi
 --
 -- Table structure for table `items`
 --
-
+DROP TABLE IF EXISTS `items`;
 CREATE TABLE IF NOT EXISTS `items` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL,
@@ -343,7 +343,7 @@ INSERT INTO `items` (`id`, `name`, `type`, `material`, `description`, `lore`, `l
 --
 -- Table structure for table `item_owned`
 --
-
+DROP TABLE IF EXISTS `item_owned`;
 CREATE TABLE IF NOT EXISTS `item_owned` (
   `iid` int(11) NOT NULL,
   `oid` int(11) NOT NULL,
@@ -447,7 +447,7 @@ INSERT INTO `item_owned` (`iid`, `oid`, `equipped`) VALUES
 --
 -- Table structure for table `level_xp`
 --
-
+DROP TABLE IF EXISTS `level_xp`;
 CREATE TABLE IF NOT EXISTS `level_xp` (
   `level` int(11) NOT NULL AUTO_INCREMENT,
   `xp_needed` float NOT NULL,
@@ -507,7 +507,7 @@ INSERT INTO `level_xp` (`level`, `xp_needed`) VALUES
 --
 -- Table structure for table `locations`
 --
-
+DROP TABLE IF EXISTS `locations`;
 CREATE TABLE IF NOT EXISTS `locations` (
   `lid` int(2) UNSIGNED NOT NULL,
   `name` varchar(60) NOT NULL,
@@ -529,7 +529,7 @@ INSERT INTO `locations` (`lid`, `name`, `type`, `min_level`, `active`) VALUES
 --
 -- Table structure for table `location_connections`
 --
-
+DROP TABLE IF EXISTS `location_connections`;
 CREATE TABLE IF NOT EXISTS `location_connections` (
   `con_id` int(2) UNSIGNED NOT NULL,
   `lid` int(2) NOT NULL,
@@ -542,7 +542,7 @@ CREATE TABLE IF NOT EXISTS `location_connections` (
 --
 -- Table structure for table `mon_drops`
 --
-
+DROP TABLE IF EXISTS `mon_drops`;
 CREATE TABLE IF NOT EXISTS `mon_drops` (
   `did` int(11) NOT NULL AUTO_INCREMENT,
   `mid` int(11) NOT NULL,
@@ -580,7 +580,7 @@ INSERT INTO `mon_drops` (`did`, `mid`, `iid`, `eid`, `msg`, `rate`, `active`) VA
 --
 -- Table structure for table `npc`
 --
-
+DROP TABLE IF EXISTS `npc`;
 CREATE TABLE IF NOT EXISTS `npc` (
   `nid` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL,
@@ -677,7 +677,7 @@ INSERT INTO `npc` (`nid`, `name`, `type`, `hp`, `str`, `def`, `dex`, `spd`, `lev
 --
 -- Table structure for table `npc_fight_stats`
 --
-
+DROP TABLE IF EXISTS `npc_fight_stats`;
 CREATE TABLE IF NOT EXISTS `npc_fight_stats` (
   `npc_id` int(11) NOT NULL,
   `win` int(11) NOT NULL DEFAULT 0,
@@ -716,7 +716,7 @@ INSERT INTO `npc_fight_stats` (`npc_id`, `win`, `loss`) VALUES
 --
 -- Table structure for table `player_vs_monster`
 --
-
+DROP TABLE IF EXISTS `player_vs_monster`;
 CREATE TABLE IF NOT EXISTS `player_vs_monster` (
   `cid` int(11) NOT NULL,
   `mid` int(11) NOT NULL,
@@ -823,7 +823,7 @@ INSERT INTO `player_vs_monster` (`cid`, `mid`, `win`, `loss`) VALUES
 --
 -- Table structure for table `play_fight_stats`
 --
-
+DROP TABLE IF EXISTS `play_fight_stats`;
 CREATE TABLE IF NOT EXISTS `play_fight_stats` (
   `character_id` int(11) NOT NULL,
   `mon_win` int(11) NOT NULL DEFAULT 0,
@@ -851,7 +851,7 @@ INSERT INTO `play_fight_stats` (`character_id`, `mon_win`, `mon_lose`, `play_win
 --
 -- Table structure for table `race`
 --
-
+DROP TABLE IF EXISTS `race`;
 CREATE TABLE IF NOT EXISTS `race` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
@@ -884,7 +884,7 @@ INSERT INTO `race` (`id`, `name`, `str_mod`, `def_mod`, `dex_mod`, `spd_mod`, `h
 --
 -- Table structure for table `season_xp`
 --
-
+DROP TABLE IF EXISTS `season_xp`;
 CREATE TABLE IF NOT EXISTS `season_xp` (
   `sid` int(3) NOT NULL,
   `cid` int(3) NOT NULL,
@@ -897,7 +897,7 @@ CREATE TABLE IF NOT EXISTS `season_xp` (
 --
 -- Table structure for table `shop`
 --
-
+DROP TABLE IF EXISTS `shop`;
 CREATE TABLE IF NOT EXISTS `shop` (
   `sid` int(11) NOT NULL AUTO_INCREMENT,
   `nid` int(11) NOT NULL COMMENT 'npc id',
@@ -927,7 +927,7 @@ INSERT INTO `shop` (`sid`, `nid`, `name`, `min_level`, `balance`, `open`) VALUES
 --
 -- Table structure for table `shop_items`
 --
-
+DROP TABLE IF EXISTS `shop_items`;
 CREATE TABLE IF NOT EXISTS `shop_items` (
   `sid` int(11) NOT NULL,
   `iid` int(11) NOT NULL,
@@ -1060,7 +1060,7 @@ INSERT INTO `shop_items` (`sid`, `iid`, `qty`, `ranged`) VALUES
 --
 -- Table structure for table `users`
 --
-
+DROP TABLE IF EXISTS `users`;
 CREATE TABLE IF NOT EXISTS `users` (
   `uid` int(11) NOT NULL AUTO_INCREMENT,
   `twitch_id` bigint(20) DEFAULT NULL,
@@ -1955,7 +1955,7 @@ INSERT INTO `users` (`uid`, `twitch_id`, `discord_id`, `username`, `follower`, `
 --
 -- Table structure for table `weapons`
 --
-
+DROP TABLE IF EXISTS `weapons`;
 CREATE TABLE IF NOT EXISTS `weapons` (
   `wid` int(11) NOT NULL AUTO_INCREMENT,
   `iid` int(11) DEFAULT NULL,
