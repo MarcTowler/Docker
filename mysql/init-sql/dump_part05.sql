@@ -176,7 +176,7 @@ LOCK TABLES `twitch_logs` WRITE;
 INSERT INTO `twitch_logs` VALUES (1,'synxiec','thespeakerbottest','ItsLittany','$querystring','2018-11-27 23:21:07','ban'),(2,'synxiec','thespeakerbottest','ItsLittany','thespeakerbottest being an asshat','2018-11-27 23:22:14','ban'),(3,'synxiec','thespeakerbottest','ItsLittany','being an asshat','2018-11-27 23:24:49','ban'),(4,'itslittany','thespeakerbottest','thespeakerbottest','a twat','2018-11-28 00:13:40','ban'),(5,'synxiec','skinnyseahorse','skinnyseahorse','today, Satan.','2018-12-27 00:58:01','ban'),(6,'synxiec','VADIKUS007','synxiec','no-no words','2018-12-27 05:20:27','ban'),(7,'synxiec','mosheddy','synxiec','harassment','2018-12-28 00:47:11','ban');
 /*!40000 ALTER TABLE `twitch_logs` ENABLE KEYS */;
 UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+-- /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
