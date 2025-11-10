@@ -7,6 +7,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 STACK_FILE="$PROJECT_ROOT/php-site-stack.yaml"
 PHP_DIR="/home/marctowler/Docker/php"  # Local path (exported via NFS)
 STACK_NAME="phpstack"
+CHECKSUM_FILE="$PROJECT_ROOT/.config_checksums"
 
 # === Vaultwarden configuration ===
 ITEM_NAME="MySQL"
@@ -69,8 +70,10 @@ bw login "$VAULT_USER" || true
 
 echo "🔓 Unlocking vault..."
 BW_SESSION=$(bw unlock --raw)
-
-# === Sync vault ===
+if [ -z "$BW_SESSION" ]; then
+  echo "❌ Failed to unlock Vaultwarden."
+  exit 1
+fi
 bw sync --session "$BW_SESSION" >/dev/null
 
 # === Retrieve MySQL credentials ===
@@ -118,7 +121,125 @@ echo "✅ Docker secrets updated."
 echo "🚀 Deploying stack '$STACK_NAME' from: $STACK_FILE"
 (cd "$PROJECT_ROOT" && docker stack deploy -c "$STACK_FILE" "$STACK_NAME")
 
-# === Lock vault afterwards ===
+echo "⏳ Waiting for services to start..."
+sleep 10
+
+# === Generate per-service config.ini from Vaultwarden ===
+echo "📦 Generating config.ini files from Vaultwarden..."
+
+declare -A apps=(
+  ["api"]="api-secrets"
+  ["GAPI"]="gapi-secrets"
+  ["RPG-Site"]="rpgsite-secrets"
+  ["Website"]="website-secrets"
+)
+
+# Map app names to Docker service names (explicit)
+declare -A service_names=(
+  ["api"]="phpstack_api"
+  ["GAPI"]="phpstack_gapi"
+  ["RPG-Site"]="phpstack_rpgsite"
+  ["Website"]="phpstack_website"
+)
+
+touch "$CHECKSUM_FILE"
+changed_services=()
+
+for app in "${!apps[@]}"; do
+  VAULT_ITEM="${apps[$app]}"
+  echo "🔐 Fetching configuration for $app ($VAULT_ITEM)..."
+
+  BW_ITEM=$(bw list items --search "$VAULT_ITEM" --session "$BW_SESSION" | jq -r '.[0]')
+  if [[ "$BW_ITEM" == "null" || -z "$BW_ITEM" ]]; then
+    echo "⚠️  No Vaultwarden item found for '$VAULT_ITEM' — skipping."
+    continue
+  fi
+
+  CONFIG_DIR="$PHP_DIR/${app}/src/Config"
+  CONFIG_PATH="$CONFIG_DIR/config.ini"
+  mkdir -p "$CONFIG_DIR"
+
+  # Helper to extract non-empty field
+  get_field() {
+    local key="$1"
+    local value
+    value=$(echo "$BW_ITEM" | jq -r --arg key "$key" '.fields[]? | select(.name==$key).value' | sed '/^null$/d;/^$/d')
+    [ -n "$value" ] && echo "$value"
+  }
+
+  TMP_FILE=$(mktemp)
+  cat > "$TMP_FILE" <<EOF
+; Auto-generated from Vaultwarden
+; Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+[site]
+TOKEN = "$(get_field TOKEN)"
+BASE_URL = "$(get_field BASE_URL)"
+
+[twitch]
+CLIENT_ID     = '$(get_field TWITCH_CLIENT_ID)'
+TWITCH_SECRET = '$(get_field TWITCH_SECRET)'
+WEBHOOK_SECRET = '$(get_field WEBHOOK_SECRET)'
+
+[streamlabs]
+SL_CLIENT_ID = '$(get_field SL_CLIENT_ID)'
+SL_SECRET   = '$(get_field SL_SECRET)'
+
+[database]
+DBHOST = "$(get_field DBHOST)"
+PORT   = $(get_field DBPORT)
+DBNAME = "$(get_field DBNAME)"
+DBUSER = "$(get_field DBUSER)"
+DBPASS = "$(get_field DBPASS)"
+
+[riot]
+RIOT_API_KEY = "$(get_field RIOT_API_KEY)"
+
+[twitter]
+CONSUMER_KEY    = "$(get_field TWITTER_CONSUMER_KEY)"
+CONSUMER_SECRET = "$(get_field TWITTER_CONSUMER_SECRET)"
+OAUTH_TOKEN     = "$(get_field TWITTER_OAUTH_TOKEN)"
+OAUTH_SECRET    = "$(get_field TWITTER_OAUTH_SECRET)"
+
+[guilded]
+TEAM_ID = "$(get_field GUILDED_TEAM_ID)"
+
+[clan_events]
+CE_API_KEY = "$(get_field CLAN_EVENTS_API_KEY)"
+EOF
+
+  chmod 600 "$TMP_FILE"
+
+  # Checksum compare
+  NEW_HASH=$(sha256sum "$TMP_FILE" | awk '{print $1}')
+  OLD_HASH=$(grep "^${app}:" "$CHECKSUM_FILE" | cut -d':' -f2 || true)
+
+  if [ "$NEW_HASH" != "$OLD_HASH" ]; then
+    echo "🆕 Config for $app changed or new. Updating..."
+    mv "$TMP_FILE" "$CONFIG_PATH"
+    echo "${app}:$NEW_HASH" >> "$CHECKSUM_FILE.tmp"
+    changed_services+=("${service_names[$app]}")
+  else
+    echo "ℹ️ Config for $app unchanged."
+    rm "$TMP_FILE"
+    echo "${app}:$OLD_HASH" >> "$CHECKSUM_FILE.tmp"
+  fi
+done
+
+mv "$CHECKSUM_FILE.tmp" "$CHECKSUM_FILE"
+
+# === Restart only changed services ===
+if [ ${#changed_services[@]} -gt 0 ]; then
+  echo "🔄 Config changed for: ${changed_services[*]}"
+  for svc in "${changed_services[@]}"; do
+    echo "🔁 Restarting service: $svc"
+    docker service update --force "$svc"
+  done
+else
+  echo "✅ No configuration changes detected — skipping service restarts."
+fi
+
+# === Lock vault ===
 bw lock
 echo "🔒 Vault locked."
 echo "🎉 Deployment complete!"
