@@ -27,7 +27,7 @@ if [ ! -d "$PHP_DIR" ]; then
   exit 1
 fi
 
-# === Clone or update PHP projects (locally on NFS host) ===
+# === Clone or update PHP projects ===
 declare -A REPOS=(
   ["api"]="git@github.com:ItsLit-Media-and-Development/api.git"
   ["Website"]="git@github.com:ItsLit-Media-and-Development/Website.git"
@@ -54,7 +54,6 @@ for dir in "${!REPOS[@]}"; do
     git clone "$repo" "$dir"
   fi
 done
-
 echo "✅ PHP repositories up to date."
 
 # === Vaultwarden login & unlock ===
@@ -79,7 +78,6 @@ bw sync --session "$BW_SESSION" >/dev/null
 # === Retrieve MySQL credentials ===
 echo "📦 Fetching MySQL credentials from Vaultwarden..."
 ITEM_ID=$(bw list items --session "$BW_SESSION" | jq -r --arg name "$ITEM_NAME" '.[] | select(.name==$name) | .id')
-
 if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
   echo "❌ Could not find item '$ITEM_NAME' in the vault."
   exit 1
@@ -89,7 +87,6 @@ MYSQL_USER=$(bw get username "$ITEM_ID" --session "$BW_SESSION" || true)
 MYSQL_PASSWORD=$(bw get password "$ITEM_ID" --session "$BW_SESSION" || true)
 NOTES=$(bw get notes "$ITEM_ID" --session "$BW_SESSION" || true)
 
-# Fallback: Secure Note handling
 if [ -z "$MYSQL_USER" ] || [ "$MYSQL_USER" = "Not found." ]; then
   MYSQL_USER=$(echo "$NOTES" | grep MYSQL_USER | cut -d '=' -f2-)
   MYSQL_PASSWORD=$(echo "$NOTES" | grep MYSQL_PASSWORD | cut -d '=' -f2-)
@@ -100,39 +97,67 @@ MYSQL_DATABASE=$(echo "$NOTES" | grep MYSQL_DATABASE | cut -d '=' -f2-)
 
 echo "✅ Secrets retrieved from Vaultwarden."
 
-# === Create / Update Docker secrets ===
-echo "🐳 Creating Docker secrets..."
+# === Smart Docker Secret Creation ===
+echo "🐳 Creating Docker secrets (smart updates)..."
+
 create_or_update_secret() {
   local name=$1
   local value=$2
+  local tmpfile
+  tmpfile=$(mktemp)
+
+  local new_checksum
+  new_checksum=$(echo -n "$value" | sha256sum | awk '{print $1}')
+
+  local old_checksum=""
+  if docker secret inspect "$name" >/dev/null 2>&1; then
+    old_checksum=$(docker secret inspect "$name" -f '{{ index .Spec.Labels "checksum" }}' 2>/dev/null || true)
+  fi
+
+  if [ "$old_checksum" = "$new_checksum" ] && [ -n "$old_checksum" ]; then
+    echo "⚡ Secret '$name' unchanged — skipping update."
+    return
+  fi
 
   if docker secret inspect "$name" >/dev/null 2>&1; then
     echo "🔁 Updating secret: $name"
     docker secret rm "$name" >/dev/null 2>&1 || true
-
-    # Wait until the secret is actually removed from Swarm
     echo "⏳ Waiting for secret '$name' to be fully removed..."
-    for i in {1..10}; do
-      if ! docker secret inspect "$name" >/dev/null 2>&1; then
-        break
-      fi
+    for i in {1..20}; do
+      if ! docker secret inspect "$name" >/dev/null 2>&1; then break; fi
       sleep 1
     done
+  else
+    echo "🆕 Creating new secret: $name"
   fi
 
-  echo "$value" | docker secret create "$name" - >/dev/null 2>&1 || {
-    echo "❌ Failed to create secret '$name'."
+  echo -n "$value" > "$tmpfile"
+  docker secret create --label "checksum=$new_checksum" "$name" "$tmpfile" >/dev/null 2>&1 || {
+    echo "❌ Failed to create secret '$name' even after waiting."
+    rm -f "$tmpfile"
     exit 1
   }
-
-  echo "✅ Secret '$name' created successfully."
+  rm -f "$tmpfile"
+  echo "✅ Secret '$name' updated successfully."
 }
 
 create_or_update_secret mysql_user "$MYSQL_USER"
 create_or_update_secret mysql_password "$MYSQL_PASSWORD"
 create_or_update_secret mysql_root_password "$MYSQL_ROOT_PASSWORD"
 create_or_update_secret mysql_database "$MYSQL_DATABASE"
-echo "✅ Docker secrets updated."
+
+# === Cleanup stale secrets ===
+echo "🧹 Checking for stale secrets..."
+ALL_SECRETS=("mysql_user" "mysql_password" "mysql_root_password" "mysql_database")
+EXISTING_SECRETS=$(docker secret ls --format '{{.Name}}')
+
+for s in $EXISTING_SECRETS; do
+  if [[ "$s" == mysql_* ]] && [[ ! " ${ALL_SECRETS[*]} " =~ " ${s} " ]]; then
+    echo "🗑️ Removing stale secret: $s"
+    docker secret rm "$s" >/dev/null 2>&1 || true
+  fi
+done
+echo "✅ Docker secrets are current."
 
 # === Deploy the stack ===
 echo "🚀 Deploying stack '$STACK_NAME' from: $STACK_FILE"
@@ -151,7 +176,6 @@ declare -A apps=(
   ["Website"]="website-secrets"
 )
 
-# Map app names to Docker service names (explicit)
 declare -A service_names=(
   ["api"]="phpstack_api"
   ["GAPI"]="phpstack_gapi"
@@ -176,7 +200,6 @@ for app in "${!apps[@]}"; do
   CONFIG_PATH="$CONFIG_DIR/config.ini"
   mkdir -p "$CONFIG_DIR"
 
-  # Helper to extract non-empty field
   get_field() {
     local key="$1"
     local value
@@ -227,7 +250,6 @@ EOF
 
   chmod 600 "$TMP_FILE"
 
-  # Checksum compare
   NEW_HASH=$(sha256sum "$TMP_FILE" | awk '{print $1}')
   OLD_HASH=$(grep "^${app}:" "$CHECKSUM_FILE" | cut -d':' -f2 || true)
 
@@ -245,7 +267,6 @@ done
 
 mv "$CHECKSUM_FILE.tmp" "$CHECKSUM_FILE"
 
-# === Restart only changed services ===
 if [ ${#changed_services[@]} -gt 0 ]; then
   echo "🔄 Config changed for: ${changed_services[*]}"
   for svc in "${changed_services[@]}"; do
@@ -256,7 +277,7 @@ else
   echo "✅ No configuration changes detected — skipping service restarts."
 fi
 
-# === Lock vault ===
+# === Lock Vaultwarden ===
 bw lock
 echo "🔒 Vault locked."
 echo "🎉 Deployment complete!"
