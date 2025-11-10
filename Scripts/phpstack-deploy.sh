@@ -5,29 +5,41 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 STACK_FILE="$PROJECT_ROOT/php-site-stack.yaml"
-PHP_DIR="/home/marctowler/Docker/php"  # Local path (exported via NFS)
+PHP_DIR="/home/marctowler/Docker/php"
 STACK_NAME="phpstack"
-CHECKSUM_FILE="$PROJECT_ROOT/.config_checksums"
+CHECKSUM_FILE="$PROJECT_ROOT/.siteini_checksums"
 
 # === Vaultwarden configuration ===
 ITEM_NAME="MySQL"
 VAULT_SERVER="https://vault.itslit"
 VAULT_USER="svc-docker@itslit"
 
-# === Allow self-signed certs (temporary) ===
+# === Discord notifications ===
+DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/1437449186298826785/k-KUcJs2Zib1zAVRfzQkwGzvf0-xlcrt5kFpA1e4P4RQ0VlYRqFJKRUwVLcdwXbS6gbu" # <-- replace this
+
+notify_discord() {
+  local color="$1"
+  local title="$2"
+  local message="$3"
+  curl -s -H "Content-Type: application/json" -X POST \
+    -d "$(jq -n --arg title "$title" --arg desc "$message" --argjson color "$color" \
+      '{embeds:[{title:$title, description:$desc, color:$color}] }')" \
+    "$DISCORD_WEBHOOK_URL" >/dev/null || true
+}
+
+# === Allow self-signed certs ===
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 
 echo "📁 Working directory: $PROJECT_ROOT"
 echo "📄 Stack file: $STACK_FILE"
 echo "📂 PHP source directory: $PHP_DIR"
 
-# === Verify PHP folder exists ===
 if [ ! -d "$PHP_DIR" ]; then
   echo "❌ PHP directory '$PHP_DIR' not found. Please check your NFS export or path."
   exit 1
 fi
 
-# === Clone or update PHP projects ===
+# === Git clone/update projects ===
 declare -A REPOS=(
   ["api"]="git@github.com:ItsLit-Media-and-Development/api.git"
   ["Website"]="git@github.com:ItsLit-Media-and-Development/Website.git"
@@ -37,7 +49,6 @@ declare -A REPOS=(
 
 echo "🌀 Syncing PHP project repositories..."
 cd "$PHP_DIR"
-
 for dir in "${!REPOS[@]}"; do
   repo="${REPOS[$dir]}"
   if [ -d "$dir/.git" ]; then
@@ -64,13 +75,13 @@ if [ "$CURRENT_SERVER" != "$VAULT_SERVER" ]; then
   bw logout || true
   bw config server "$VAULT_SERVER"
 fi
-
 bw login "$VAULT_USER" || true
 
 echo "🔓 Unlocking vault..."
 BW_SESSION=$(bw unlock --raw)
 if [ -z "$BW_SESSION" ]; then
   echo "❌ Failed to unlock Vaultwarden."
+  notify_discord 15158332 "❌ Vault Unlock Failed" "Could not unlock Vaultwarden as $VAULT_USER."
   exit 1
 fi
 bw sync --session "$BW_SESSION" >/dev/null
@@ -78,8 +89,10 @@ bw sync --session "$BW_SESSION" >/dev/null
 # === Retrieve MySQL credentials ===
 echo "📦 Fetching MySQL credentials from Vaultwarden..."
 ITEM_ID=$(bw list items --session "$BW_SESSION" | jq -r --arg name "$ITEM_NAME" '.[] | select(.name==$name) | .id')
+
 if [ -z "$ITEM_ID" ] || [ "$ITEM_ID" = "null" ]; then
   echo "❌ Could not find item '$ITEM_NAME' in the vault."
+  notify_discord 15158332 "❌ Missing Vault Item" "Vault item **$ITEM_NAME** was not found."
   exit 1
 fi
 
@@ -91,91 +104,38 @@ if [ -z "$MYSQL_USER" ] || [ "$MYSQL_USER" = "Not found." ]; then
   MYSQL_USER=$(echo "$NOTES" | grep MYSQL_USER | cut -d '=' -f2-)
   MYSQL_PASSWORD=$(echo "$NOTES" | grep MYSQL_PASSWORD | cut -d '=' -f2-)
 fi
-
 MYSQL_ROOT_PASSWORD=$(echo "$NOTES" | grep MYSQL_ROOT_PASSWORD | cut -d '=' -f2-)
 MYSQL_DATABASE=$(echo "$NOTES" | grep MYSQL_DATABASE | cut -d '=' -f2-)
 
-echo "✅ Secrets retrieved from Vaultwarden."
-
-# === Smart Docker Secret Creation ===
-echo "🐳 Creating Docker secrets (smart updates)..."
-
+# === Docker secrets ===
+echo "🐳 Creating Docker secrets..."
 create_or_update_secret() {
   local name=$1
   local value=$2
-  local tmpfile
-  tmpfile=$(mktemp)
-
-  local new_checksum
-  new_checksum=$(echo -n "$value" | sha256sum | awk '{print $1}')
-
-  local old_checksum=""
   if docker secret inspect "$name" >/dev/null 2>&1; then
-    old_checksum=$(docker secret inspect "$name" -f '{{ index .Spec.Labels "checksum" }}' 2>/dev/null || true)
-  fi
-
-  if [ "$old_checksum" = "$new_checksum" ] && [ -n "$old_checksum" ]; then
-    echo "⚡ Secret '$name' unchanged — skipping update."
-    return
-  fi
-
-  if docker secret inspect "$name" >/dev/null 2>&1; then
-    echo "🔁 Updating secret: $name"
     docker secret rm "$name" >/dev/null 2>&1 || true
-    echo "⏳ Waiting for secret '$name' to be fully removed..."
-    for i in {1..20}; do
-      if ! docker secret inspect "$name" >/dev/null 2>&1; then break; fi
-      sleep 1
-    done
-  else
-    echo "🆕 Creating new secret: $name"
   fi
-
-  echo -n "$value" > "$tmpfile"
-  docker secret create --label "checksum=$new_checksum" "$name" "$tmpfile" >/dev/null 2>&1 || {
-    echo "❌ Failed to create secret '$name' even after waiting."
-    rm -f "$tmpfile"
-    exit 1
-  }
-  rm -f "$tmpfile"
-  echo "✅ Secret '$name' updated successfully."
+  echo "$value" | docker secret create "$name" -
 }
-
 create_or_update_secret mysql_user "$MYSQL_USER"
 create_or_update_secret mysql_password "$MYSQL_PASSWORD"
 create_or_update_secret mysql_root_password "$MYSQL_ROOT_PASSWORD"
 create_or_update_secret mysql_database "$MYSQL_DATABASE"
-
-# === Cleanup stale secrets ===
-echo "🧹 Checking for stale secrets..."
-ALL_SECRETS=("mysql_user" "mysql_password" "mysql_root_password" "mysql_database")
-EXISTING_SECRETS=$(docker secret ls --format '{{.Name}}')
-
-for s in $EXISTING_SECRETS; do
-  if [[ "$s" == mysql_* ]] && [[ ! " ${ALL_SECRETS[*]} " =~ " ${s} " ]]; then
-    echo "🗑️ Removing stale secret: $s"
-    docker secret rm "$s" >/dev/null 2>&1 || true
-  fi
-done
-echo "✅ Docker secrets are current."
+echo "✅ Docker secrets updated."
 
 # === Deploy the stack ===
 echo "🚀 Deploying stack '$STACK_NAME' from: $STACK_FILE"
 (cd "$PROJECT_ROOT" && docker stack deploy -c "$STACK_FILE" "$STACK_NAME")
-
-echo "⏳ Waiting for services to start..."
 sleep 10
 
-# === Generate per-service config.ini from Vaultwarden ===
-echo "📦 Generating config.ini files from Vaultwarden..."
-
+# === Generate per-service site.ini ===
+echo "📦 Generating site.ini files from Vaultwarden..."
 declare -A apps=(
   ["api"]="api-secrets"
   ["GAPI"]="gapi-secrets"
   ["RPG-Site"]="rpgsite-secrets"
   ["Website"]="website-secrets"
 )
-
 declare -A service_names=(
   ["api"]="phpstack_api"
   ["GAPI"]="phpstack_gapi"
@@ -189,7 +149,6 @@ changed_services=()
 for app in "${!apps[@]}"; do
   VAULT_ITEM="${apps[$app]}"
   echo "🔐 Fetching configuration for $app ($VAULT_ITEM)..."
-
   BW_ITEM=$(bw list items --search "$VAULT_ITEM" --session "$BW_SESSION" | jq -r '.[0]')
   if [[ "$BW_ITEM" == "null" || -z "$BW_ITEM" ]]; then
     echo "⚠️  No Vaultwarden item found for '$VAULT_ITEM' — skipping."
@@ -249,35 +208,62 @@ CE_API_KEY = "$(get_field CLAN_EVENTS_API_KEY)"
 EOF
 
   chmod 600 "$TMP_FILE"
-
   NEW_HASH=$(sha256sum "$TMP_FILE" | awk '{print $1}')
   OLD_HASH=$(grep "^${app}:" "$CHECKSUM_FILE" | cut -d':' -f2 || true)
 
   if [ "$NEW_HASH" != "$OLD_HASH" ]; then
-    echo "🆕 Config for $app changed or new. Updating..."
+    echo "🆕 site.ini for $app changed or new."
     mv "$TMP_FILE" "$CONFIG_PATH"
     echo "${app}:$NEW_HASH" >> "$CHECKSUM_FILE.tmp"
     changed_services+=("${service_names[$app]}")
   else
-    echo "ℹ️ Config for $app unchanged."
+    echo "ℹ️ site.ini for $app unchanged."
     rm "$TMP_FILE"
     echo "${app}:$OLD_HASH" >> "$CHECKSUM_FILE.tmp"
   fi
 done
-
 mv "$CHECKSUM_FILE.tmp" "$CHECKSUM_FILE"
 
+# === Retry service updates ===
+retry_service_update() {
+  local svc="$1"
+  local max_retries=6
+  local delay=5
+  for ((i=1; i<=max_retries; i++)); do
+    if docker service update --force "$svc" >/tmp/docker_update.log 2>&1; then
+      echo "✅ $svc updated (attempt $i)"
+      notify_discord 3066993 "✅ Service Restarted" "**$svc** updated successfully (attempt $i)."
+      return 0
+    fi
+    if grep -q "no such image" /tmp/docker_update.log; then
+      echo "⚠️ Attempt $i failed: image not available. Retrying in ${delay}s..."
+      sleep $delay
+      delay=$((delay * 2))
+    else
+      echo "❌ Update failed for $svc"
+      tail -n 10 /tmp/docker_update.log
+      notify_discord 15158332 "❌ Service Update Failed" "**$svc** failed.\n\`\`\`$(tail -n 10 /tmp/docker_update.log)\`\`\`"
+      return 1
+    fi
+  done
+  notify_discord 15158332 "❌ Service Restart Failed" "**$svc** failed after $max_retries retries."
+  return 1
+}
+
+# === Restart changed services ===
 if [ ${#changed_services[@]} -gt 0 ]; then
-  echo "🔄 Config changed for: ${changed_services[*]}"
+  notify_discord 3447003 "🔄 Config Changes Detected" "Services to restart:\n- ${changed_services[*]}"
   for svc in "${changed_services[@]}"; do
     echo "🔁 Restarting service: $svc"
-    docker service update --force "$svc"
+    retry_service_update "$svc"
   done
 else
-  echo "✅ No configuration changes detected — skipping service restarts."
+  echo "✅ No configuration changes detected."
+  notify_discord 3066993 "✅ No Config Changes" "No config updates detected during deployment."
 fi
 
-# === Lock Vaultwarden ===
+# === Lock vault ===
 bw lock
 echo "🔒 Vault locked."
+notify_discord 3066993 "🎉 Deployment Complete" "All updates and secrets synchronized successfully at $(date -u)."
 echo "🎉 Deployment complete!"
