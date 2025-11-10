@@ -197,7 +197,7 @@ for app in "${!apps[@]}"; do
   fi
 
   CONFIG_DIR="$PHP_DIR/${app}/src/Config"
-  CONFIG_PATH="$CONFIG_DIR/config.ini"
+  CONFIG_PATH="$CONFIG_DIR/site.ini"
   mkdir -p "$CONFIG_DIR"
 
   get_field() {
