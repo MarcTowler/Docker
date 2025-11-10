@@ -105,12 +105,29 @@ echo "🐳 Creating Docker secrets..."
 create_or_update_secret() {
   local name=$1
   local value=$2
+
   if docker secret inspect "$name" >/dev/null 2>&1; then
     echo "🔁 Updating secret: $name"
     docker secret rm "$name" >/dev/null 2>&1 || true
+
+    # Wait until the secret is actually removed from Swarm
+    echo "⏳ Waiting for secret '$name' to be fully removed..."
+    for i in {1..10}; do
+      if ! docker secret inspect "$name" >/dev/null 2>&1; then
+        break
+      fi
+      sleep 1
+    done
   fi
-  echo "$value" | docker secret create "$name" -
+
+  echo "$value" | docker secret create "$name" - >/dev/null 2>&1 || {
+    echo "❌ Failed to create secret '$name'."
+    exit 1
+  }
+
+  echo "✅ Secret '$name' created successfully."
 }
+
 create_or_update_secret mysql_user "$MYSQL_USER"
 create_or_update_secret mysql_password "$MYSQL_PASSWORD"
 create_or_update_secret mysql_root_password "$MYSQL_ROOT_PASSWORD"
