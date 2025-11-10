@@ -227,8 +227,8 @@ mv "$CHECKSUM_FILE.tmp" "$CHECKSUM_FILE"
 # === Retry service updates ===
 retry_service_update() {
   local svc="$1"
-  local max_retries=6
-  local delay=5
+  local max_retries=15
+  local delay=25
   for ((i=1; i<=max_retries; i++)); do
     if docker service update --force "$svc" >/tmp/docker_update.log 2>&1; then
       echo "✅ $svc updated (attempt $i)"
