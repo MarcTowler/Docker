@@ -107,21 +107,64 @@ fi
 MYSQL_ROOT_PASSWORD=$(echo "$NOTES" | grep MYSQL_ROOT_PASSWORD | cut -d '=' -f2-)
 MYSQL_DATABASE=$(echo "$NOTES" | grep MYSQL_DATABASE | cut -d '=' -f2-)
 
-# === Docker secrets ===
-echo "🐳 Creating Docker secrets..."
-create_or_update_secret() {
+# === Create / Update Docker secrets safely ===
+echo "🐳 Creating or updating Docker secrets (only if changed)..."
+
+safe_create_or_update_secret() {
   local name=$1
   local value=$2
+  local tmpfile
+  tmpfile=$(mktemp)
+
+  echo -n "$value" >"$tmpfile"
+  local new_hash
+  new_hash=$(sha256sum "$tmpfile" | awk '{print $1}')
+
+  # check if secret exists
   if docker secret inspect "$name" >/dev/null 2>&1; then
+    local current_data
+    current_data=$(docker secret inspect "$name" -f '{{.Spec.Data}}' 2>/dev/null | base64 --decode || true)
+    local current_hash
+    current_hash=$(echo -n "$current_data" | sha256sum | awk '{print $1}')
+
+    if [ "$new_hash" == "$current_hash" ]; then
+      echo "✅ Secret '$name' unchanged. Skipping."
+      rm -f "$tmpfile"
+      return 0
+    fi
+
+    echo "🔁 Secret '$name' changed. Creating new version..."
+    local new_name="${name}_$(date +%s)"
+    docker secret create "$new_name" "$tmpfile" >/dev/null
+
+    echo "⚙️  Updating services using '$name' to '$new_name'..."
+    services=$(docker service ls --format '{{.Name}}' | xargs -n1 docker service inspect --format '{{.Spec.Name}} {{range .Spec.TaskTemplate.ContainerSpec.Secrets}}{{.SecretName}}{{end}}' 2>/dev/null | grep "$name" | awk '{print $1}' || true)
+
+    for svc in $services; do
+      echo "   ↳ Updating service: $svc"
+      docker service update --secret-rm "$name" --secret-add source="$new_name",target="/run/secrets/$name" "$svc" >/dev/null || true
+    done
+
+    echo "🧹 Removing old secret '$name'..."
     docker secret rm "$name" >/dev/null 2>&1 || true
+
+    echo "🔄 Renaming new secret '$new_name' → '$name'..."
+    docker secret create "$name" "$tmpfile" >/dev/null
+    docker secret rm "$new_name" >/dev/null 2>&1 || true
+  else
+    echo "🆕 Creating secret '$name'..."
+    docker secret create "$name" "$tmpfile" >/dev/null
   fi
-  echo "$value" | docker secret create "$name" -
+
+  rm -f "$tmpfile"
 }
-create_or_update_secret mysql_user "$MYSQL_USER"
-create_or_update_secret mysql_password "$MYSQL_PASSWORD"
-create_or_update_secret mysql_root_password "$MYSQL_ROOT_PASSWORD"
-create_or_update_secret mysql_database "$MYSQL_DATABASE"
-echo "✅ Docker secrets updated."
+
+safe_create_or_update_secret mysql_user "$MYSQL_USER"
+safe_create_or_update_secret mysql_password "$MYSQL_PASSWORD"
+safe_create_or_update_secret mysql_root_password "$MYSQL_ROOT_PASSWORD"
+safe_create_or_update_secret mysql_database "$MYSQL_DATABASE"
+
+echo "✅ Docker secrets verified and updated where necessary."
 
 # === Deploy the stack ===
 echo "🚀 Deploying stack '$STACK_NAME' from: $STACK_FILE"
