@@ -235,8 +235,9 @@ mv "$CHECKSUM_FILE.tmp" "$CHECKSUM_FILE"
 # === Retry service update with pre-pull ===
 retry_service_update() {
   local svc="$1"
-  local max_retries=15
+  local max_retries=10
   local delay=20
+
   for ((i=1; i<=max_retries; i++)); do
     local image
     image=$(docker service inspect "$svc" -f '{{.Spec.TaskTemplate.ContainerSpec.Image}}' 2>/dev/null || true)
@@ -244,22 +245,34 @@ retry_service_update() {
       docker pull "$(echo "$image" | cut -d'@' -f1)" >/dev/null 2>&1 || true
     fi
 
+    echo "🔁 Forcing update on $svc (attempt $i/$max_retries)"
     if docker service update --force "$svc" >/tmp/docker_update.log 2>&1; then
-      notify_discord 3066993 "✅ Service Restarted" "**$svc** restarted successfully."
-      return 0
+      if ! docker service ps "$svc" --no-trunc --filter desired-state=Running | grep -q "Failed"; then
+        echo "✅ $svc updated successfully (attempt $i)"
+        notify_discord 3066993 "✅ Service Restarted" "**$svc** restarted successfully (attempt $i)."
+        return 0
+      fi
     fi
+
     if grep -q "no such image" /tmp/docker_update.log; then
-      echo "⚠️ $svc: Image not found, retrying in $delay sec..."
-      sleep $delay
-      delay=$((delay + 10))
+      echo "⚠️ $svc: image not yet available, retrying in ${delay}s..."
+    elif docker service inspect "$svc" --format '{{.UpdateStatus.State}}' 2>/dev/null | grep -q "paused"; then
+      echo "⚠️ $svc update paused — resuming and retrying..."
+      docker service update --force --update-failure-action continue "$svc" >/dev/null 2>&1 || true
     else
+      echo "❌ $svc update failed, see /tmp/docker_update.log"
       tail -n 10 /tmp/docker_update.log
-      notify_discord 15158332 "❌ Service Update Failed" "**$svc** failed after attempt $i."
-      return 1
     fi
+
+    sleep $delay
+    delay=$((delay + 10))
   done
+
+  echo "❌ $svc failed after $max_retries retries."
   notify_discord 15158332 "❌ Service Restart Failed" "**$svc** failed after $max_retries retries."
+  return 1
 }
+
 
 # === Restart changed services ===
 if [ ${#changed_services[@]} -gt 0 ]; then
