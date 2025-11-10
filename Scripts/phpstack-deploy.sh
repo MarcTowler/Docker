@@ -93,7 +93,7 @@ MYSQL_PASSWORD=$(bw get password "$ITEM_ID" --session "$BW_SESSION" || echo "$NO
 MYSQL_ROOT_PASSWORD=$(echo "$NOTES" | grep MYSQL_ROOT_PASSWORD | cut -d '=' -f2-)
 MYSQL_DATABASE=$(echo "$NOTES" | grep MYSQL_DATABASE | cut -d '=' -f2-)
 
-# === Create / Update secrets safely ===
+# === Safe secret create/update with retry ===
 echo "🐳 Checking Docker secrets..."
 touch "$SECRETS_HASH_FILE"
 
@@ -118,13 +118,31 @@ safe_create_or_update_secret() {
 
   echo "🔁 Updating secret: $name"
   if docker secret inspect "$name" >/dev/null 2>&1; then
-    local new_name="${name}_$(date +%s)"
-    docker secret create "$new_name" "$tmpfile" >/dev/null
+    echo "🧹 Removing old secret '$name'..."
     docker secret rm "$name" >/dev/null 2>&1 || true
+
+    # Wait for Raft to settle
+    for i in {1..10}; do
+      if ! docker secret inspect "$name" >/dev/null 2>&1; then
+        break
+      fi
+      echo "⏳ Waiting for secret '$name' to disappear... ($i/10)"
+      sleep 1
+    done
+
+    # If still exists, fallback to versioned name
+    if docker secret inspect "$name" >/dev/null 2>&1; then
+      echo "⚠️  Secret '$name' still exists — using versioned name."
+      name="${name}_$(date +%s)"
+    fi
   fi
+
+  echo "🆕 Creating secret '$name'..."
   docker secret create "$name" "$tmpfile" >/dev/null
   rm -f "$tmpfile"
   echo "${name}:$new_hash" >> "$SECRETS_HASH_FILE.tmp"
+
+  sleep 2  # Small delay to let Swarm Raft replicate
 }
 
 safe_create_or_update_secret mysql_user "$MYSQL_USER"
@@ -133,7 +151,7 @@ safe_create_or_update_secret mysql_root_password "$MYSQL_ROOT_PASSWORD"
 safe_create_or_update_secret mysql_database "$MYSQL_DATABASE"
 
 mv "$SECRETS_HASH_FILE.tmp" "$SECRETS_HASH_FILE"
-echo "✅ Docker secrets updated."
+echo "✅ Docker secrets verified and updated."
 
 # === Deploy stack ===
 echo "🚀 Deploying stack '$STACK_NAME'"
