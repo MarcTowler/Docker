@@ -215,7 +215,7 @@ DBUSER = "$(get_field DBUSER)"
 DBPASS = "$(get_field DBPASS)"
 EOF
 
-  chmod 600 "$TMP_FILE"
+  chmod 644 "$TMP_FILE"
   NEW_HASH=$(normalize_file "$TMP_FILE" | sha256sum | awk '{print $1}')
   OLD_HASH=$(grep "^${app}:" "$CHECKSUM_FILE" | cut -d':' -f2 || true)
 
