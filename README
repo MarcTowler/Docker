@@ -57,3 +57,305 @@ Make the controller executable:
 chmod +x provision_swarm_from_bastion.sh
 ./provision-from-bastion.sh nodes.yml
 ```
+
+# 🐳 PHPStack Docker Swarm Deployment
+
+This repository contains the full deployment configuration for the **ItsLit PHP stack**, including:
+- Multiple PHP-based services (`api`, `gapi`, `website`, `rpgsite`)
+- MySQL database service
+- Traefik reverse proxy integration
+- Automated deployment, configuration management, and secret synchronization
+
+---
+
+## 🚀 Overview
+
+This system runs as a **Docker Swarm stack** that dynamically deploys PHP services and manages configuration, credentials, and data automatically.  
+All components are synchronized using Git, Vaultwarden, and Discord webhooks for full transparency.
+
+### Key Components
+
+| Component | Purpose |
+|------------|----------|
+| **`php-site-stack.yaml`** | Defines the full Swarm stack (services, volumes, networks) |
+| **`Scripts/phpstack-deploy.sh`** | Fully automated deployment and synchronization script |
+| **`Vaultwarden`** | Central secure store for credentials and config values |
+| **`Discord Webhook`** | Real-time notifications for deploys, errors, and config changes |
+| **`/srv/itslit/php/`** | NFS-mounted directory containing live PHP application code |
+| **`/srv/itslit/mysql/`** | MySQL initialization scripts and configuration directory |
+
+---
+
+## 🔁 Deployment Flow
+
+### 1️⃣ Clone & Update Repositories
+Each PHP app is stored in GitHub:
+
+| App | Repository |
+|------|-------------|
+| `api` | `git@github.com:ItsLit-Media-and-Development/api.git` |
+| `GAPI` | `git@github.com:ItsLit-Media-and-Development/GAPI.git` |
+| `Website` | `git@github.com:ItsLit-Media-and-Development/Website.git` |
+| `RPG-Site` | `git@github.com:MarcTowler/RPG-Site.git` |
+
+During deployment, the script automatically:
+- Clones missing repositories
+- Fetches updates and resets branches to the latest remote HEAD
+- Ensures code is placed under `/srv/itslit/php/<APP>/`
+
+---
+
+### 2️⃣ Vaultwarden Integration
+The script logs into **Vaultwarden** using a service account (`svc-docker@itslit`) and retrieves:
+
+- MySQL credentials (`mysql_user`, `mysql_password`, `mysql_root_password`, `mysql_database`)
+- Per-application configuration data (`api-secrets`, `rpgsite-secrets`, etc.)
+
+Each app’s secret data is used to generate `/srv/itslit/php/<APP>/src/Config/site.ini`.
+
+#### Vaultwarden Server
+```
+https://vault.itslit
+```
+
+#### Vaultwarden Items
+| App | Vault Item | Output |
+|------|-------------|---------|
+| `api` | `api-secrets` | `/srv/itslit/php/api/src/Config/site.ini` |
+| `GAPI` | `gapi-secrets` | `/srv/itslit/php/GAPI/src/Config/site.ini` |
+| `Website` | `website-secrets` | `/srv/itslit/php/Website/src/Config/site.ini` |
+| `RPG-Site` | `rpgsite-secrets` | `/srv/itslit/php/RPG-Site/src/Config/site.ini` |
+
+---
+
+### 3️⃣ Smart Docker Secret Management
+
+Secrets are updated **only if values have changed** to avoid breaking running services.
+
+- Old secrets remain active if unchanged.
+- Updated secrets are rotated safely and reattached to dependent services.
+- Hash-based comparison ensures idempotent updates.
+
+Secrets used:
+- `mysql_user`
+- `mysql_password`
+- `mysql_root_password`
+- `mysql_database`
+
+---
+
+### 4️⃣ Stack Deployment
+
+The stack is deployed via:
+
+```bash
+docker stack deploy -c php-site-stack.yaml phpstack
+```
+
+Services:
+- `phpstack_api`
+- `phpstack_gapi`
+- `phpstack_website`
+- `phpstack_rpgsite`
+- `phpstack_mysql`
+
+Volumes & networks are created automatically.  
+All code mounts via NFS, allowing any Swarm node to host the container.
+
+---
+
+### 5️⃣ Discord Notifications
+
+Deployment events and errors are reported to Discord using a webhook:
+```
+https://discord.com/api/webhooks/<token>
+```
+
+| Event | Color | Description |
+|--------|--------|-------------|
+| ✅ Success | Green | Deployment completed or secret updated |
+| ⚠️ Warning | Yellow | Retrying service update (e.g., image not available) |
+| ❌ Error | Red | Vault unlock failure or service update error |
+
+---
+
+### 6️⃣ MySQL Configuration & UTF-8 Fix
+
+#### Problem:
+Old imports converted accented characters (like `Pokémon → PokÃ©mon`) due to `latin1` defaults.
+
+#### Solution:
+A global MySQL configuration file enforces `utf8mb4` for all sessions and connections.
+
+**Path:**  
+`/srv/itslit/mysql/conf.d/charset.cnf`
+
+```ini
+[mysqld]
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+skip-character-set-client-handshake
+
+[client]
+default-character-set = utf8mb4
+
+[mysql]
+default-character-set = utf8mb4
+
+[mysqldump]
+default-character-set = utf8mb4
+```
+
+Mounted in the stack:
+```yaml
+volumes:
+  - /srv/itslit/mysql/conf.d:/etc/mysql/conf.d
+```
+
+✅ All connections, imports, and app queries now use `utf8mb4`.
+
+---
+
+### 7️⃣ Auto-Retry for Registry Sync Delays
+
+If Swarm reports:
+```
+no such image: registry.itslit/library/api:latest
+```
+The script:
+- Waits and retries up to 15 times with exponential backoff.
+- Notifies Discord if it continues to fail.
+
+This handles temporary delays in the Docker registry.
+
+---
+
+### 8️⃣ Security & File Handling
+
+| Type | Measure |
+|------|----------|
+| Vault session | Automatically locked after deploy |
+| Config files | Written with `chmod 600` |
+| Sensitive data | Never logged or stored in plaintext |
+| Git updates | Force reset to remote HEAD (no stale code) |
+
+---
+
+## 🧪 Verification
+
+### Check MySQL Character Sets
+```bash
+docker exec -it $(docker ps -qf name=mysql)   mysql -u"marctowl_api" -p"<password>" -e "SHOW VARIABLES LIKE 'character_set%';"
+```
+
+Expected result:
+```
+character_set_client     utf8mb4
+character_set_connection utf8mb4
+character_set_results    utf8mb4
+character_set_server     utf8mb4
+```
+
+### Check Service Status
+```bash
+docker service ls
+docker service ps phpstack_api
+```
+
+### Trigger a Manual Redeploy
+```bash
+./Scripts/phpstack-deploy.sh
+```
+
+---
+
+## 🧰 File Structure
+
+```
+Docker/
+├── php-site-stack.yaml         # Main Swarm stack definition
+├── Scripts/
+│   └── phpstack-deploy.sh      # Automated deployment script
+├── php/
+│   ├── api/
+│   ├── GAPI/
+│   ├── Website/
+│   └── RPG-Site/
+└── /srv/itslit/
+    ├── php/                    # Shared NFS mount for PHP code
+    └── mysql/
+        ├── init-sql/           # SQL dump files
+        └── conf.d/charset.cnf  # MySQL UTF-8 config
+```
+
+---
+
+## 🛠️ Troubleshooting
+
+### ❌ Vaultwarden: “Not Found” or Login Failure
+- Ensure Vaultwarden server matches:
+  ```bash
+  bw config server https://vault.itslit
+  ```
+- Use the correct user:
+  ```bash
+  svc-docker@itslit
+  ```
+- If needed, clear old sessions:
+  ```bash
+  bw logout && bw login svc-docker@itslit
+  ```
+
+---
+
+### 🐳 Docker Secret Error: “Already Exists”
+This occurs when a secret name conflicts during rotation.
+
+Run:
+```bash
+docker secret rm <secret_name>
+./Scripts/phpstack-deploy.sh
+```
+
+The script now safely updates only changed secrets.
+
+---
+
+### ⚠️ “No Such Image” During Update
+This means Swarm tried to update before the registry was ready.
+The deploy script will:
+- Retry automatically up to 15 times.
+- Double retry delay each time.
+If it persists, run:
+```bash
+docker service update --force phpstack_api
+```
+
+---
+
+### 🧾 “Permission Denied” Reading `site.ini`
+Ensure proper ownership:
+```bash
+sudo chown -R 1000:1000 /srv/itslit/php/*
+sudo chmod 600 /srv/itslit/php/*/src/Config/site.ini
+```
+
+---
+
+### 🧩 Database Encoding Wrong (PokÃ©mon Issue)
+Verify MySQL charset:
+```bash
+SHOW VARIABLES LIKE 'character_set%';
+```
+All values must be `utf8mb4`.  
+If not, ensure `/srv/itslit/mysql/conf.d/charset.cnf` is mounted correctly.
+
+---
+
+### 💥 MySQL Table “Too Long Key” Error
+Caused by old MyISAM tables + utf8mb4.
+Fix:
+```sql
+ALTER TABLE <table> ENGINE=InnoDB ROW_FORMAT=DYNAMIC;
+```
+Or replace `ENGINE=MyISAM` with `ENGINE=InnoDB` in your SQL dump.
