@@ -1,0 +1,303 @@
+version: "3.9"
+
+services:
+
+  # ------------------------------------------------------------
+  # Radarr
+  # ------------------------------------------------------------
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/radarr/config:/config
+      - /data/media/movies:/movies
+      - /data/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.radarr.rule=Host(`radarr.itslit`)"
+        - "traefik.http.routers.radarr.entrypoints=websecure"
+        - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+        - "traefik.http.routers.radarr.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # Sonarr
+  # ------------------------------------------------------------
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/sonarr/config:/config
+      - /data/media/tv:/tv
+      - /data/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.sonarr.rule=Host(`sonarr.itslit`)"
+        - "traefik.http.routers.sonarr.entrypoints=websecure"
+        - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+        - "traefik.http.routers.sonarr.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # Lidarr
+  # ------------------------------------------------------------
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/lidarr/config:/config
+      - /data/media/music:/music
+      - /data/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8686/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.lidarr.rule=Host(`lidarr.itslit`)"
+        - "traefik.http.routers.lidarr.entrypoints=websecure"
+        - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
+        - "traefik.http.routers.lidarr.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # Readarr
+  # ------------------------------------------------------------
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/readarr/config:/config
+      - /data/media/books:/books
+      - /data/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.readarr.rule=Host(`readarr.itslit`)"
+        - "traefik.http.routers.readarr.entrypoints=websecure"
+        - "traefik.http.services.readarr.loadbalancer.server.port=8787"
+        - "traefik.http.routers.readarr.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # Prowlarr
+  # ------------------------------------------------------------
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/prowlarr/config:/config
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.itslit`)"
+        - "traefik.http.routers.prowlarr.entrypoints=websecure"
+        - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+        - "traefik.http.routers.prowlarr.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # Bazarr (subtitles)
+  # ------------------------------------------------------------
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/bazarr/config:/config
+      - /data/media:/media
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6767"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.bazarr.rule=Host(`bazarr.itslit`)"
+        - "traefik.http.routers.bazarr.entrypoints=websecure"
+        - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
+        - "traefik.http.routers.bazarr.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # qBittorrent
+  # ------------------------------------------------------------
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/qbit/config:/config
+      - /data/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - WEBUI_PORT=8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v2/app/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.qbit.rule=Host(`qbit.itslit`)"
+        - "traefik.http.routers.qbit.entrypoints=websecure"
+        - "traefik.http.services.qbit.loadbalancer.server.port=8080"
+        - "traefik.http.routers.qbit.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # SABnzbd (Usenet)
+  # ------------------------------------------------------------
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/sabnzbd/config:/config
+      - /data/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/sabnzbd/api?mode=version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.itslit`)"
+        - "traefik.http.routers.sabnzbd.entrypoints=websecure"
+        - "traefik.http.services.sabnzbd.loadbalancer.server.port=8080"
+        - "traefik.http.routers.sabnzbd.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # Jellyfin
+  # ------------------------------------------------------------
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/jellyfin/config:/config
+      - /data/apps/jellyfin/cache:/cache
+      - /data/media:/media
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.itslit`)"
+        - "traefik.http.routers.jellyfin.entrypoints=websecure"
+        - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+        - "traefik.http.routers.jellyfin.middlewares=authentik@file"
+
+
+  # ------------------------------------------------------------
+  # Overseerr
+  # ------------------------------------------------------------
+  overseerr:
+    image: sctx/overseerr:latest
+    networks:
+      - traefik-proxy
+      - arr-backend
+    volumes:
+      - /data/apps/overseerr/config:/app/config
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5055/api/v1/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.overseerr.rule=Host(`overseerr.itslit`)"
+        - "traefik.http.routers.overseerr.entrypoints=websecure"
+        - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
+        - "traefik.http.routers.overseerr.middlewares=authentik@file"
+
+
+# ------------------------------------------------------------
+# Networks
+# ------------------------------------------------------------
+networks:
+  traefik-proxy:
+    external: true
+  arr-backend:
+    external: true
