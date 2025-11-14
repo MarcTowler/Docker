@@ -297,7 +297,7 @@ services:
 # Networks
 # ------------------------------------------------------------
 networks:
-  traefik-proxy:
+  traefik_proxy:
     external: true
   arr-backend:
     external: true
