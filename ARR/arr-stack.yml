@@ -8,7 +8,7 @@ services:
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/radarr/config:/config
@@ -39,7 +39,7 @@ services:
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/sonarr/config:/config
@@ -69,7 +69,7 @@ services:
   lidarr:
     image: lscr.io/linuxserver/lidarr:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/lidarr/config:/config
@@ -99,7 +99,7 @@ services:
   readarr:
     image: lscr.io/linuxserver/readarr:develop
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/readarr/config:/config
@@ -129,7 +129,7 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/prowlarr/config:/config
@@ -157,7 +157,7 @@ services:
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/bazarr/config:/config
@@ -186,7 +186,7 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/qbit/config:/config
@@ -216,7 +216,7 @@ services:
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/sabnzbd/config:/config
@@ -245,7 +245,7 @@ services:
   jellyfin:
     image: jellyfin/jellyfin:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/jellyfin/config:/config
@@ -273,7 +273,7 @@ services:
   overseerr:
     image: sctx/overseerr:latest
     networks:
-      - traefik-proxy
+      - traefik_proxy
       - arr-backend
     volumes:
       - /data/apps/overseerr/config:/app/config
