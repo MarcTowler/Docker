@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+
+  authentik-postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: authentik
+      POSTGRES_DB: authentik
+    volumes:
+      - /data/authentik/postgres:/var/lib/postgresql/data
+    networks:
+      - authentik
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+
+  authentik-redis:
+    image: redis:7
+    networks:
+      - authentik
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+
+  authentik-server:
+    image: ghcr.io/goauthentik/server:latest
+    environment:
+      AUTHENTIK_SECRET_KEY: changeme_super_long
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_PORT: 9000
+    volumes:
+      - /data/authentik/media:/media
+      - /data/authentik/custom-templates:/templates
+    networks:
+      - traefik-proxy
+      - authentik
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.authentik.rule=Host(`authentik.itslit`)"
+        - "traefik.http.routers.authentik.entrypoints=websecure"
+        - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+      placement:
+        constraints:
+          - node.role==manager
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:latest
+    command: worker
+    environment:
+      AUTHENTIK_SECRET_KEY: changeme_super_long
+      AUTHENTIK_REDIS__HOST: authentik-redis
+      AUTHENTIK_POSTGRESQL__HOST: authentik-postgres
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+    networks:
+      - authentik
+    deploy:
+      placement:
+        constraints:
+          - node.role==manager
+
+networks:
+  traefik_proxy:
+    external: true
+  authentik:
+    driver: overlay
