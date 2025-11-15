@@ -261,11 +261,11 @@ services:
       - PGID=1000
       - TZ=UTC
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/sabnzbd/api?mode=version || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api?mode=version || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 1m
+      start_period: 90s
     deploy:
       resources:
         limits:
