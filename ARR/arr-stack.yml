@@ -295,7 +295,7 @@ services:
     environment:
       - TZ=UTC
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8096/health || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 8096 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
