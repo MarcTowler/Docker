@@ -229,7 +229,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v2/app/version || exit 1"]
       interval: 30s
       timeout: 10s
-      start_period: 1m
+      start_period: 3m
       retries: 5
     deploy:
       resources:
@@ -265,7 +265,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 90s
+      start_period: 3m
     deploy:
       resources:
         limits:
@@ -299,7 +299,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 1m
+      start_period: 3m
     deploy:
       resources:
         limits:
