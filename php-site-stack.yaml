@@ -100,8 +100,8 @@ services:
           - node.hostname == growlithe
     volumes:
       - mysqldata:/var/lib/mysql
-      - /srv/itslit/mysql/init-sql:/docker-entrypoint-initdb.d/:ro
-      - /srv/itslit/mysql/conf.d:/etc/mysql/conf.d
+      - ./mysql/init-sql:/docker-entrypoint-initdb.d/:ro
+      - ./mysql/conf.d:/etc/mysql/conf.d
     networks:
       - traefik_proxy
 
