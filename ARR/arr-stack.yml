@@ -229,6 +229,7 @@ services:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v2/app/version || exit 1"]
       interval: 30s
       timeout: 10s
+      start_period: 1m
       retries: 5
     deploy:
       resources:
