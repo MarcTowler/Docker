@@ -239,68 +239,32 @@ services:
 
 
   # ------------------------------------------------------------
-  # SABnzbd
+  # Jellyseerr
   # ------------------------------------------------------------
-  sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:latest
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
     networks:
       - traefik_proxy
-      - arr-backend
+      - arr
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == Arcanine
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.itslit`)"
+        - "traefik.http.routers.jellyseerr.entrypoints=websecure"
+        - "traefik.http.routers.jellyseerr.tls=true"
+        - "traefik.http.routers.jellyseerr.tls.certresolver=selfsigned"
+        - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
     volumes:
-      - /data/apps/sabnzbd/config:/config
-      - /data/downloads:/downloads
+      - /data/apps/jellyseerr/config:/app/config
     environment:
+      - LOG_LEVEL=info
+      - TZ=Europe/London
       - PUID=1000
       - PGID=1000
-      - TZ=UTC
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api?mode=version || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 90s
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 256M
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.itslit`)"
-        - "traefik.http.routers.sabnzbd.entrypoints=websecure"
-        - "traefik.http.services.sabnzbd.loadbalancer.server.port=8080"
-
-
-  # ------------------------------------------------------------
-  # Overseerr
-  # ------------------------------------------------------------
-  overseerr:
-    image: sctx/overseerr:latest
-    networks:
-      - traefik_proxy
-      - arr-backend
-    volumes:
-      - /data/apps/overseerr/config:/app/config
-    environment:
-      - TZ=UTC
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5055/api/v1/status || exit 1"]
-      interval: 120s
-      timeout: 120s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 256M
-      labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.overseerr.rule=Host(`overseerr.itslit`)"
-        - "traefik.http.routers.overseerr.entrypoints=websecure"
-        - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
-
 
 # ------------------------------------------------------------
 # Networks
