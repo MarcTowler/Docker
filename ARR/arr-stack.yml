@@ -8,7 +8,7 @@ services:
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/radarr/config:/config
@@ -34,7 +34,6 @@ services:
         - "traefik.http.routers.radarr.rule=Host(`radarr.itslit`)"
         - "traefik.http.routers.radarr.entrypoints=websecure"
         - "traefik.http.services.radarr.loadbalancer.server.port=7878"
-        - "traefik.http.routers.radarr.middlewares=authentik@file"
 
 
   # ------------------------------------------------------------
@@ -43,7 +42,7 @@ services:
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/sonarr/config:/config
@@ -69,7 +68,6 @@ services:
         - "traefik.http.routers.sonarr.rule=Host(`sonarr.itslit`)"
         - "traefik.http.routers.sonarr.entrypoints=websecure"
         - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
-        - "traefik.http.routers.sonarr.middlewares=authentik@file"
 
 
   # ------------------------------------------------------------
@@ -78,7 +76,7 @@ services:
   lidarr:
     image: lscr.io/linuxserver/lidarr:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/lidarr/config:/config
@@ -104,7 +102,6 @@ services:
         - "traefik.http.routers.lidarr.rule=Host(`lidarr.itslit`)"
         - "traefik.http.routers.lidarr.entrypoints=websecure"
         - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
-        - "traefik.http.routers.lidarr.middlewares=authentik@file"
 
 
   # ------------------------------------------------------------
@@ -113,7 +110,7 @@ services:
   readarr:
     image: lscr.io/linuxserver/readarr:develop
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/readarr/config:/config
@@ -139,7 +136,6 @@ services:
         - "traefik.http.routers.readarr.rule=Host(`readarr.itslit`)"
         - "traefik.http.routers.readarr.entrypoints=websecure"
         - "traefik.http.services.readarr.loadbalancer.server.port=8787"
-        - "traefik.http.routers.readarr.middlewares=authentik@file"
 
 
   # ------------------------------------------------------------
@@ -148,7 +144,7 @@ services:
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/prowlarr/config:/config
@@ -172,7 +168,6 @@ services:
         - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.itslit`)"
         - "traefik.http.routers.prowlarr.entrypoints=websecure"
         - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
-        - "traefik.http.routers.prowlarr.middlewares=authentik@file"
 
 
   # ------------------------------------------------------------
@@ -181,7 +176,7 @@ services:
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/bazarr/config:/config
@@ -206,7 +201,6 @@ services:
         - "traefik.http.routers.bazarr.rule=Host(`bazarr.itslit`)"
         - "traefik.http.routers.bazarr.entrypoints=websecure"
         - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
-        - "traefik.http.routers.bazarr.middlewares=authentik@file"
 
 
   # ------------------------------------------------------------
@@ -215,7 +209,7 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/qbit/config:/config
@@ -225,12 +219,12 @@ services:
       - PGID=1000
       - TZ=UTC
       - WEBUI_PORT=8080
-    # healthcheck:
-    #   test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v2/app/version || exit 1"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   start_period: 3m
-    #   retries: 5
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v2/app/version || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -242,7 +236,6 @@ services:
         - "traefik.http.routers.qbit.rule=Host(`qbit.itslit`)"
         - "traefik.http.routers.qbit.entrypoints=websecure"
         - "traefik.http.services.qbit.loadbalancer.server.port=8080"
-        - "traefik.http.routers.qbit.middlewares=authentik@file"
 
 
   # ------------------------------------------------------------
@@ -251,7 +244,7 @@ services:
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/sabnzbd/config:/config
@@ -265,7 +258,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 3m
+      start_period: 90s
     deploy:
       resources:
         limits:
@@ -277,7 +270,7 @@ services:
         - "traefik.http.routers.sabnzbd.rule=Host(`sabnzbd.itslit`)"
         - "traefik.http.routers.sabnzbd.entrypoints=websecure"
         - "traefik.http.services.sabnzbd.loadbalancer.server.port=8080"
-        - "traefik.http.routers.sabnzbd.middlewares=authentik@file"
+
 
   # ------------------------------------------------------------
   # Overseerr
@@ -285,7 +278,7 @@ services:
   overseerr:
     image: sctx/overseerr:latest
     networks:
-      - traefik_proxy
+      - traefik-proxy
       - arr-backend
     volumes:
       - /data/apps/overseerr/config:/app/config
@@ -307,14 +300,13 @@ services:
         - "traefik.http.routers.overseerr.rule=Host(`overseerr.itslit`)"
         - "traefik.http.routers.overseerr.entrypoints=websecure"
         - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
-        - "traefik.http.routers.overseerr.middlewares=authentik@file"
 
 
 # ------------------------------------------------------------
 # Networks
 # ------------------------------------------------------------
 networks:
-  traefik_proxy:
+  traefik-proxy:
     external: true
   arr-backend:
     external: true
