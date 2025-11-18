@@ -259,6 +259,7 @@ services:
       - TZ=Europe/London
       - PUID=1000
       - PGID=1000
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
 
 # ------------------------------------------------------------
 # Networks
