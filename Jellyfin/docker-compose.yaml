@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    network_mode: host          # REQUIRED for SSDP, DLNA, Chromecast, TV discovery
+    volumes:
+      - /srv/jellyfin/config:/config
+      - /srv/jellyfin/cache:/cache
+      - /data/media:/media     # NFS OK for media ONLY
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+
+      # Router
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.itslit`)"
+      - "traefik.http.routers.jellyfin.entrypoints=websecure"
+
+      # Service: tell Traefik to connect to host network port
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+      - "traefik.http.services.jellyfin.loadbalancer.server.scheme=http"
+
+      # Authentik (if desired)
+      - "traefik.http.routers.jellyfin.middlewares=authentik@file"
+
+    # Works with Docker provider even in host networking
