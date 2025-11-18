@@ -152,11 +152,15 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=UTC
+      - LOCALHOST_REWRITE=true
+      - SERVARR__API__URL=https://apps.servarr.com/v1
+
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:9696/ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
+
     deploy:
       resources:
         limits:
@@ -165,9 +169,21 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
+        - "traefik.docker.network=traefik_proxy"
+
+        # ROUTING
         - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.itslit`)"
         - "traefik.http.routers.prowlarr.entrypoints=websecure"
+        - "traefik.http.routers.prowlarr.service=prowlarr"
+
+        # SERVICE PORT
         - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+        - "traefik.http.services.prowlarr.loadbalancer.server.scheme=http"
+
+        # Required Servarr headers for definitions API
+        - "traefik.http.middlewares.prowlarr-servarr-headers.headers.customrequestheaders.User-Agent=Prowlarr"
+        - "traefik.http.middlewares.prowlarr-servarr-headers.headers.customrequestheaders.X-Servarr-Version=1.0"
+        - "traefik.http.routers.prowlarr.middlewares=prowlarr-servarr-headers"
 
 
   # ------------------------------------------------------------
