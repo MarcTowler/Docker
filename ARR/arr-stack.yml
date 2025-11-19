@@ -195,6 +195,7 @@ services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     networks:
+      - traefik_proxy
       - arr-backend
     environment:
       - LOG_LEVEL=info
