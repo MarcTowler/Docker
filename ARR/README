@@ -1,0 +1,389 @@
+# Media Stack Deployment Guide (Docker Swarm + Traefik + Jellyseerr + FlareSolverr)
+
+## Overview
+This guide documents the full process to deploy, configure, maintain, and restore your media automation environment using:
+
+- Docker Swarm (1 manager + 2 workers)
+- Traefik reverse proxy (self‑signed wildcard cert)
+- Prowlarr
+- Radarr
+- Sonarr
+- Lidarr
+- Jellyseerr
+- qBittorrent
+- FlareSolverr (pinned to arcanine)
+- Jellyfin (standalone on worker node)
+- NFS-backed storage under /data
+
+Usenet is not used. Torrent-only stack.
+
+---
+
+# 1. Prerequisites
+
+## 1.1 Required Nodes
+- **Manager:** growlithe  
+- **Workers:** arcanine, fuecoco  
+
+## 1.2 NFS Server (Manager: growlithe)
+Create directories:
+
+```
+sudo mkdir -p /data/apps
+sudo mkdir -p /data/library
+sudo mkdir -p /data/downloads
+sudo mkdir -p /data/apps/{prowlarr,radarr,sonarr,lidarr,qbittorrent,jellyseerr}/{config}
+```
+
+Permissions:
+
+```
+sudo chown -R 1000:1000 /data
+```
+
+Export `/etc/exports`:
+
+```
+/data *(rw,sync,no_subtree_check,no_root_squash)
+```
+
+Reload:
+
+```
+sudo exportfs -ra
+sudo systemctl restart nfs-kernel-server
+```
+
+---
+
+# 2. Docker Swarm Networks
+
+Create:
+
+```
+docker network create -d overlay traefik_proxy
+docker network create -d overlay arr-backend
+```
+
+---
+
+# 3. DNS Configuration (All Nodes)
+
+Edit:
+
+```
+sudo nano /etc/docker/daemon.json
+```
+
+Add:
+
+```
+{
+  "dns": ["1.1.1.1", "8.8.8.8"]
+}
+```
+
+Reload Docker:
+
+```
+sudo systemctl restart docker
+```
+
+---
+
+# 4. Traefik Deployment
+
+Ensure certs exist:
+
+```
+/data/traefik/certs/wildcard.crt
+/data/traefik/certs/wildcard.key
+```
+
+Deploy:
+
+```
+docker stack deploy -c traefik-stack.yml traefik
+```
+
+Access dashboard:
+
+```
+https://traefik.itslit
+```
+
+---
+
+# 5. ARR Stack Deployment
+
+Deploy:
+
+```
+docker stack deploy -c arr-stack.yml arr
+```
+
+Verify services:
+
+```
+docker service ls
+docker ps
+```
+
+---
+
+# 6. Jellyfin Deployment (Standalone on arcanine)
+
+```
+docker run -d   --name jellyfin   --network traefik_proxy   -v /data/apps/jellyfin/config:/config   -v /data/library:/media   -e PUID=1000 -e PGID=1000   --label "traefik.enable=true"   --label "traefik.http.routers.jellyfin.rule=Host(`jellyfin.itslit`)"   --label "traefik.http.routers.jellyfin.entrypoints=websecure"   --label "traefik.http.services.jellyfin.loadbalancer.server.port=8096"   jellyfin/jellyfin:latest
+```
+
+---
+
+# 7. First-Time Configuration
+
+## 7.1 qBittorrent
+Open:
+
+```
+https://qbittorrent.itslit
+```
+
+Set:
+- Categories: `movies`, `tv`, `music`
+- Disable anonymous mode
+- Set save paths to `/downloads` and category subfolders
+
+---
+
+## 7.2 Prowlarr
+Open:
+
+```
+https://prowlarr.itslit
+```
+
+### Add FlareSolverr
+Settings → Indexers → Add Proxy → FlareSolverr
+
+Use URL:
+
+```
+http://flaresolverr:8191
+```
+
+Timeout: 30s
+
+### Add Radarr/Sonarr/Lidarr
+Settings → Apps → Add
+
+Use internal addresses:
+
+```
+http://radarr:7878
+http://sonarr:8989
+http://lidarr:8686
+```
+
+Enable:
+- Sync Categories
+- Add Indexers
+
+---
+
+## 7.3 Radarr/Sonarr/Lidarr
+
+### Radarr
+```
+https://radarr.itslit
+```
+Root folder:
+```
+/movies
+```
+
+Download client:
+```
+qBittorrent → http://qbittorrent:8081
+```
+
+### Sonarr
+Root:
+```
+/tv
+```
+
+### Lidarr
+Root:
+```
+/music
+```
+
+---
+
+## 7.4 Jellyseerr
+
+Open:
+
+```
+https://jellyseerr.itslit
+```
+
+Settings:
+1. Connect Jellyfin  
+2. Add Radarr (movies)  
+3. Add Sonarr (tv)  
+4. Disable Plex-related options  
+
+---
+
+# 8. FlareSolverr Setup Instructions
+
+### Step 1 — Add Proxy in Prowlarr
+Settings → Indexers → Add → **FlareSolverr**
+
+### Step 2 — Internal URL:
+
+```
+http://flaresolverr:8191/
+```
+
+### Step 3 — Assign to specific indexers
+
+For each indexer:
+- Edit  
+- Set **Use Proxy: FlareSolverr**  
+- Save  
+- Test  
+
+If “Cloudflare challenge failed”, increase timeout to **45 seconds**.
+
+---
+
+# 9. Useful Service URLs
+
+| Service | URL |
+|--------|-----|
+| Traefik | https://traefik.itslit |
+| Prowlarr | https://prowlarr.itslit |
+| Radarr | https://radarr.itslit |
+| Sonarr | https://sonarr.itslit |
+| Lidarr | https://lidarr.itslit |
+| qBittorrent | https://qbittorrent.itslit |
+| Jellyseerr | https://jellyseerr.itslit |
+| Jellyfin | https://jellyfin.itslit |
+
+---
+
+# 10. Disaster Recovery Guide
+
+## 10.1 Restoring the NFS Server
+
+If `/data` is lost:
+```
+sudo mkdir -p /data
+sudo restore backup of /data
+sudo chown -R 1000:1000 /data
+sudo exportfs -ra
+sudo systemctl restart nfs-kernel-server
+```
+
+Verify mounts on workers:
+
+```
+df -h
+```
+
+---
+
+## 10.2 Restore Docker Networks
+
+```
+docker network create -d overlay traefik_proxy
+docker network create -d overlay arr-backend
+```
+
+---
+
+## 10.3 Restore Traefik
+
+Place certs:
+
+```
+/data/traefik/certs/wildcard.crt
+/data/traefik/certs/wildcard.key
+```
+
+Redeploy:
+
+```
+docker stack deploy -c traefik-stack.yml traefik
+```
+
+---
+
+## 10.4 Restore ARR Configs
+
+Each app stores everything in `/data/apps/<app>/config/`.
+
+Restore:
+
+```
+rsync -av backups/prowlarr/ /data/apps/prowlarr/config/
+...
+```
+
+Set ownership:
+
+```
+sudo chown -R 1000:1000 /data/apps
+```
+
+---
+
+## 10.5 Re-deploy ARR stack
+
+```
+docker stack deploy -c arr-stack.yml arr
+```
+
+---
+
+## 10.6 Validate Internal Connectivity
+
+Test from inside Prowlarr:
+
+```
+docker exec -it $(docker ps -f name=prowlarr -q) ping radarr
+docker exec -it $(docker ps -f name=prowlarr -q) ping flaresolverr
+```
+
+---
+
+## 10.7 Test External Connectivity
+
+```
+docker exec -it prowlarr curl https://apps.servarr.com/v1/applications
+```
+
+Expected: JSON output.
+
+---
+
+## 10.8 Validate Traefik
+
+Access:
+
+```
+https://traefik.itslit
+```
+
+Ensure all routers and services appear green.
+
+---
+
+# 11. Final Notes
+
+- Always include `SERVARR__API__URL=https://apps.servarr.com/v1` for all Servarr apps.
+- FlareSolverr must stay on the same node as Prowlarr to prevent timeout.
+- Never mount `/data` using CIFS; always use NFS.
+- This stack is torrent‑only and does not require SABnzbd.
