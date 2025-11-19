@@ -186,9 +186,9 @@ services:
         - "traefik.http.services.prowlarr.loadbalancer.server.scheme=http"
 
         # Required Servarr headers for definitions API
-        - "traefik.http.middlewares.prowlarr-servarr-headers.headers.customrequestheaders.User-Agent=Prowlarr"
-        - "traefik.http.middlewares.prowlarr-servarr-headers.headers.customrequestheaders.X-Servarr-Version=1.0"
-        - "traefik.http.routers.prowlarr.middlewares=prowlarr-servarr-headers"
+        # - "traefik.http.middlewares.prowlarr-servarr-headers.headers.customrequestheaders.User-Agent=Prowlarr"
+        # - "traefik.http.middlewares.prowlarr-servarr-headers.headers.customrequestheaders.X-Servarr-Version=1.0"
+        # - "traefik.http.routers.prowlarr.middlewares=prowlarr-servarr-headers"
 
   # -----------------------------------------------------------
   # FlareSolverr (pinned to arcanine, required by Prowlarr)
