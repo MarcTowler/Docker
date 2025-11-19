@@ -185,7 +185,30 @@ services:
         - "traefik.http.middlewares.prowlarr-servarr-headers.headers.customrequestheaders.X-Servarr-Version=1.0"
         - "traefik.http.routers.prowlarr.middlewares=prowlarr-servarr-headers"
 
+  # -----------------------------------------------------------
+  # FlareSolverr (pinned to arcanine, required by Prowlarr)
+  # -----------------------------------------------------------
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    networks:
+      - arr-backend
+    environment:
+      - LOG_LEVEL=info
+      - TZ=UTC
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == arcanine
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8191/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
+      
   # ------------------------------------------------------------
   # Bazarr
   # ------------------------------------------------------------
