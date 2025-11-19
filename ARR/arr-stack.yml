@@ -154,7 +154,6 @@ services:
       - TZ=UTC
       - LOCALHOST_REWRITE=true
       - SERVARR__API__URL=https://apps.servarr.com/v1
-      - DOCKER_MODS=linuxserver/mods:universal-dnsfix
     dns:
       - 1.1.1.1
       - 8.8.8.8
