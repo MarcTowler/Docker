@@ -154,10 +154,6 @@ services:
       - TZ=UTC
       - LOCALHOST_REWRITE=true
       - SERVARR__API__URL=https://apps.servarr.com/v1
-    dns:
-      - 1.1.1.1
-      - 8.8.8.8
-      - 9.9.9.9
 
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:9696/ping || exit 1"]
@@ -166,6 +162,10 @@ services:
       retries: 5
 
     deploy:
+      dns:
+        - 1.1.1.1
+        - 8.8.8.8
+        - 9.9.9.9
       resources:
         limits:
           memory: 1G
