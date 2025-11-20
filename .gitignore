@@ -24,3 +24,11 @@ Vagrantfile
 *.ini
 php/*
 node/Socket-Server/*
+.*
+VaultWarden/vw-data/*
+*.txt
+*.hash
+*.crt
+*.key
+*.pem
+Registry/registry/*
