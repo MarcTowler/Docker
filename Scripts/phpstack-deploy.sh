@@ -195,6 +195,32 @@ for app in "${!apps[@]}"; do
   }
 
   TMP_FILE=$(mktemp)
+
+  if [["$app" == "Website"]]; then
+    cat > "$TMP_FILE" <<EOF
+; Auto-generated
+[site]
+TOKEN = "$(get_field TOKEN)"
+NAME  = "$(get_field NAME)"
+TITLE = "$(get_field TITLE)"
+DEFAULT_CONTROLLER = "$(get_field DEFAULT_CONTROLLER)"
+DEFAULT_ACTION = "$(get_field DEFAULT_ACTION)"
+API_USER = "$(get_field API_USER)"
+API_KEY = "$(get_field API_KEY)"
+
+
+[database]
+DBHOST = "$(get_field DBHOST)"
+PORT = $(get_field DBPORT)
+DBNAME = "$(get_field DBNAME)"
+DBUSER = "$(get_field DBUSER)"
+DBPASS = "$(get_field DBPASS)"
+
+[twitch]
+CLIENT_ID     = '$(get_field TWITCH_CLIENT_ID)'
+TWITCH_SECRET = '$(get_field TWITCH_SECRET)'
+EOF
+  else
   cat > "$TMP_FILE" <<EOF
 ; Auto-generated
 [site]
@@ -214,6 +240,7 @@ DBNAME = "$(get_field DBNAME)"
 DBUSER = "$(get_field DBUSER)"
 DBPASS = "$(get_field DBPASS)"
 EOF
+  fi
 
   chmod 644 "$TMP_FILE"
   NEW_HASH=$(normalize_file "$TMP_FILE" | sha256sum | awk '{print $1}')
