@@ -5,7 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 STACK_FILE="$PROJECT_ROOT/php-site-stack.yaml"
-PHP_DIR="/home/marctowler/Docker/php"
+#PHP_DIR="/home/marctowler/Docker/php"
+PHP_DIR="/srv/itslit/php"
 STACK_NAME="phpstack"
 CHECKSUM_FILE="$PROJECT_ROOT/.siteini_checksums"
 SECRETS_HASH_FILE="$PROJECT_ROOT/.secret_hashes"
@@ -196,11 +197,14 @@ for app in "${!apps[@]}"; do
 
   TMP_FILE=$(mktemp)
 
-  if [["$app" == "Website"]]; then
+  if [ "$app" == "Website" ]; then
+    echo "Generating config for $app with extended fields..."
     cat > "$TMP_FILE" <<EOF
 ; Auto-generated
 [site]
 TOKEN = "$(get_field TOKEN)"
+BASE_URL = "$(get_field BASE_URL)"
+API_BASE = "$(get_field API_BASE)"
 NAME  = "$(get_field NAME)"
 TITLE = "$(get_field TITLE)"
 DEFAULT_CONTROLLER = "$(get_field DEFAULT_CONTROLLER)"
