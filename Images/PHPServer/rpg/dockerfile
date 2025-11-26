@@ -17,7 +17,7 @@ COPY --from=registry.itslit/composer:2.4 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html/rpg
 COPY ./composer.json ./
-RUN composer install --prefer-dist --no-dev --no-scripts --no-progress --no-interaction
+RUN composer install --prefer-dist --no-scripts --no-progress --no-interaction
 RUN composer dump-autoload --optimize
 
 EXPOSE 80
