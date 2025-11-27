@@ -1,0 +1,17 @@
+[mysqld]
+# Ensure all new databases and tables use utf8mb4
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+# Force all clients to use utf8mb4, even if they request something else
+skip-character-set-client-handshake
+
+[client]
+default-character-set = utf8mb4
+
+[mysql]
+default-character-set = utf8mb4
+
+[mysqldump]
+default-character-set = utf8mb4
+
