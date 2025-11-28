@@ -1,43 +1,8 @@
-FROM ubuntu:22.04
+FROM ghcr.io/myoung34/docker-github-actions-runner:latest
 
-# Install base + docker CLI
-RUN apt-get update && apt-get install -y \
-    curl jq git iputils-ping sudo unzip \
-    ca-certificates gnupg lsb-release \
-    libicu70 libkrb5-3 zlib1g libssl3 liblttng-ust1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Docker CLI
-RUN mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
-       > /etc/apt/sources.list.d/docker.list \
-    && apt-get update && apt-get install -y docker-ce-cli \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user and add to docker group
-RUN groupadd docker \
-    && useradd -m -d /home/runner -G docker runner \
-    && mkdir -p /home/runner/actions-runner \
-    && chown -R runner:runner /home/runner
-
-# Grant passwordless sudo to runner user
-RUN echo "runner ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/runner \
-    && chmod 0440 /etc/sudoers.d/runner
-
-WORKDIR /home/runner/actions-runner
-
-# Download GitHub Actions runner
-ARG RUNNER_VERSION=2.319.1
-RUN curl -o actions-runner.tar.gz -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
-    && tar xzf actions-runner.tar.gz \
-    && rm actions-runner.tar.gz \
-    && chown -R runner:runner /home/runner/actions-runner
-
-# Copy scripts
-COPY entrypoint.sh /entrypoint.sh
-COPY runner-entry.sh /runner-entry.sh
-
-RUN chmod +x /entrypoint.sh /runner-entry.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/bin/bash", "-lc", " \
+  if [ -f /run/secrets/gh_actions_pat ]; then \
+    export ACCESS_TOKEN=$(cat /run/secrets/gh_actions_pat); \
+  fi; \
+  exec /entrypoint.sh \
+"]

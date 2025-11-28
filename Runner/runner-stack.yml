@@ -1,0 +1,80 @@
+version: "3.8"
+
+services:
+  github_runner_org:
+    image: registry.itslit/library/github-runner:latest
+    networks:
+      - traefik_proxy
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    environment:
+      # org-wide runner
+      RUNNER_SCOPE: org
+      ORG_NAME: ItsLit-Media-and-Development
+
+      # Labels - used in workflows:
+      # runs-on: [self-hosted, swarm, docker, org-runner]
+      LABELS: self-hosted,swarm,docker,org-runner
+
+      RUNNER_WORKDIR: /tmp/github-runner-org
+      EPHEMERAL: "true"
+      DISABLE_AUTO_UPDATE: "true"
+
+    secrets:
+      - gh_actions_pat
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 0
+      placement:
+        constraints:
+          - node.role == worker
+
+  github_runner_personal:
+    image: registry.itslit/library/github-runner:latest
+    networks:
+      - traefik_proxy
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    environment:
+      # repo-scoped runner for ONE personal repo
+      RUNNER_SCOPE: repo
+      REPO_URL: https://github.com/MarcTowler/Docker
+
+      # Labels - used in workflows:
+      # runs-on: [self-hosted, swarm, docker, personal-runner]
+      LABELS: self-hosted,swarm,docker,personal-runner
+
+      RUNNER_WORKDIR: /tmp/github-runner-personal
+      EPHEMERAL: "true"
+      DISABLE_AUTO_UPDATE: "true"
+
+    secrets:
+      - gh_actions_pat
+
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 0
+      placement:
+        constraints:
+          - node.role == worker
+
+networks:
+  traefik_proxy:
+    external: true
+
+secrets:
+  gh_actions_pat:
+    external: true
