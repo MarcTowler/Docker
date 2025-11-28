@@ -41,6 +41,8 @@ services:
       # HTTPS EntryPoint
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.web.transport.respondingTimeouts.readTimeout=180m"
+      - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=180m"
 
       # Attach dynamic TLS file
       - "--providers.file.filename=/dynamic/tls.yaml"

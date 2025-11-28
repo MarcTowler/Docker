@@ -173,7 +173,7 @@ services:
           memory: 256M
       labels:
         - "traefik.enable=true"
-        - "traefik.docker.network=traefik_proxy"
+        - "traefik.swarm.network=traefik_proxy"
 
         # ROUTING
         - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.itslit`)"

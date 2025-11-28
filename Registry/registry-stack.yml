@@ -25,6 +25,8 @@ services:
         - "traefik.http.routers.registry.entrypoints=websecure"
         - "traefik.http.routers.registry.tls=true"
         - "traefik.http.routers.registry.service=registry"
+        - "traefik.http.routers.registry.middlewares=registryBuffer"
+        - "traefik.http.middlewares.registryBuffer.buffering.maxRequestBodyBytes=0"
 
   registry_mirror:
     image: docker:27.3.1
