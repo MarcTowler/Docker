@@ -1,8 +1,86 @@
-FROM ghcr.io/myoung34/docker-github-actions-runner:latest
+FROM ubuntu:22.04
 
-ENTRYPOINT ["/bin/bash", "-lc", " \
-  if [ -f /run/secrets/gh_actions_pat ]; then \
-    export ACCESS_TOKEN=$(cat /run/secrets/gh_actions_pat); \
-  fi; \
-  exec /entrypoint.sh \
-"]
+LABEL maintainer="marc@marctowler.co.uk"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ----------------------------------------------------
+# Basic utilities
+# ----------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y \
+      curl wget unzip jq \
+      git ca-certificates \
+      build-essential \
+      libssl-dev libicu-dev libkrb5-3 zlib1g \
+      && rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------
+# Install Docker CLI
+# ----------------------------------------------------
+RUN mkdir -m 0755 -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+      gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo \
+      "deb [arch=$(dpkg --print-architecture) \
+            signed-by=/etc/apt/keyrings/docker.gpg] \
+            https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+            > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli && \
+    rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------
+# Install Node LTS
+# ----------------------------------------------------
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------
+# Install .NET SDK (example: 8.0)
+# ----------------------------------------------------
+RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb && \
+    apt-get update && \
+    apt-get install -y dotnet-sdk-8.0 && \
+    rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------
+# Install PHP + Composer
+# ----------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y \
+      php php-cli php-xml php-mbstring php-zip php-curl php-mysql && \
+    curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php && \
+    php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
+    rm -rf /tmp/composer-setup.php && \
+    rm -rf /var/lib/apt/lists/*
+
+# ----------------------------------------------------
+# Install GitHub Actions Runner
+# ----------------------------------------------------
+ARG RUNNER_VERSION="2.319.1"
+RUN mkdir -p /actions-runner && \
+    cd /actions-runner && \
+    curl -fsSL -O https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
+    tar xzf actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
+    ./bin/installdependencies.sh && \
+    rm actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
+
+# Add dedicated runner user
+RUN useradd -m runner && \
+    chown -R runner:runner /actions-runner
+
+# ----------------------------------------------------
+# Copy entrypoint
+# ----------------------------------------------------
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+USER runner
+WORKDIR /actions-runner
+
+ENTRYPOINT ["/entrypoint.sh"]

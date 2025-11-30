@@ -11,6 +11,7 @@ services:
 
     environment:
       # org-wide runner
+      RUNNER_DEBUG: "0"
       RUNNER_SCOPE: org
       ORG_NAME: ItsLit-Media-and-Development
 
@@ -23,7 +24,7 @@ services:
       DISABLE_AUTO_UPDATE: "true"
 
     secrets:
-      - gh_actions_pat
+      - github_actions_pat
 
     deploy:
       mode: replicated
@@ -58,7 +59,7 @@ services:
       DISABLE_AUTO_UPDATE: "true"
 
     secrets:
-      - gh_actions_pat
+      - github_actions_pat
 
     deploy:
       mode: replicated
@@ -76,5 +77,5 @@ networks:
     external: true
 
 secrets:
-  gh_actions_pat:
+  github_actions_pat:
     external: true
