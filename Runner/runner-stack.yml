@@ -1,81 +1,63 @@
 version: "3.8"
 
+secrets:
+  gh_pat_org:
+    external: true
+  gh_pat_personal:
+    external: true
+
 services:
-  github_runner_org:
+  runner_org:
     image: registry.itslit/library/github-runner:latest
     networks:
-      - traefik_proxy
-
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-
-    environment:
-      # org-wide runner
-      RUNNER_DEBUG: "0"
-      RUNNER_SCOPE: org
-      ORG_NAME: ItsLit-Media-and-Development
-
-      # Labels - used in workflows:
-      # runs-on: [self-hosted, swarm, docker, org-runner]
-      LABELS: self-hosted,swarm,docker,org-runner
-
-      RUNNER_WORKDIR: /tmp/github-runner-org
-      EPHEMERAL: "true"
-      DISABLE_AUTO_UPDATE: "true"
-
-    secrets:
-      - github_actions_pat
-
+      - default
     deploy:
       mode: replicated
-      replicas: 1
-      restart_policy:
-        condition: any
-        delay: 5s
-        max_attempts: 0
+      replicas: 2
       placement:
         constraints:
           - node.role == worker
-
-  github_runner_personal:
-    image: registry.itslit/library/github-runner:latest
-    networks:
-      - traefik_proxy
-
+      restart_policy:
+        condition: on-failure
+    environment:
+      GH_SCOPE: "org"
+      GH_OWNER: "ItsLit-Media-and-Development"
+      GH_RUNNER_NAME_PREFIX: "itslit-org"
+      GH_LABELS: "self-hosted,swarm,org"
+      GH_RUNNER_GROUP: "ContainerRunners"
+      GH_PAT_FILE: "/run/secrets/gh_pat"
+    secrets:
+      - source: gh_pat_org
+        target: gh_pat
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-    environment:
-      # repo-scoped runner for ONE personal repo
-      RUNNER_SCOPE: repo
-      REPO_URL: https://github.com/MarcTowler/Docker
-
-      # Labels - used in workflows:
-      # runs-on: [self-hosted, swarm, docker, personal-runner]
-      LABELS: self-hosted,swarm,docker,personal-runner
-
-      RUNNER_WORKDIR: /tmp/github-runner-personal
-      EPHEMERAL: "true"
-      DISABLE_AUTO_UPDATE: "true"
-
-    secrets:
-      - github_actions_pat
-
+  runner_personal:
+    image: registry.itslit/library/github-runner:latest
+    networks:
+      - default
     deploy:
       mode: replicated
       replicas: 1
-      restart_policy:
-        condition: any
-        delay: 5s
-        max_attempts: 0
       placement:
         constraints:
           - node.role == worker
+      restart_policy:
+        condition: on-failure
+    environment:
+      GH_SCOPE: "repo"             # personal repo runner
+      GH_OWNER: "MarcTowler" # <--- change this
+      GH_REPOSITORY: "Docker"   # <--- or template per stack if needed
+      GH_RUNNER_NAME_PREFIX: "itslit-personal"
+      GH_LABELS: "self-hosted,swarm,personal"
+      GH_RUNNER_GROUP: "ContainerRunners"
+      GH_PAT_FILE: "/run/secrets/gh_pat"
+    secrets:
+      - source: gh_pat_personal
+        target: gh_pat
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
-  traefik_proxy:
-    external: true
-
-secrets:
-  github_actions_pat:
-    external: true
+  default:
+    driver: overlay

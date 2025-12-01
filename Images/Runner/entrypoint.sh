@@ -1,70 +1,64 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "[INFO] Custom GitHub Runner entrypoint started"
+: "${GH_SCOPE:?must be 'org' or 'repo'}"
+: "${GH_OWNER:?GitHub org or user name}"
+: "${GH_RUNNER_NAME_PREFIX:=swarm-runner}"
+: "${GH_LABELS:=self-hosted,swarm}"
+: "${GH_PAT_FILE:=/run/secrets/gh_pat}"
+: "${GH_RUNNER_GROUP:=Default}"
 
-# Debug mode – keeps the container alive for inspection
-if [[ "$RUNNER_DEBUG" == "1" ]]; then
-    echo "[DEBUG] Sleeping for 1 hour so you can inspect the container..."
-    sleep 3600
+if [ ! -f "$GH_PAT_FILE" ]; then
+  echo "ERROR: PAT secret file not found at $GH_PAT_FILE"
+  exit 1
 fi
 
-# Load PAT from Docker secret
-if [[ -f /run/secrets/github_actions_pat ]]; then
-    export ACCESS_TOKEN="$(cat /run/secrets/github_actions_pat)"
+GH_PAT="$(cat "$GH_PAT_FILE")"
+if [ -z "$GH_PAT" ]; then
+  echo "ERROR: PAT is empty"
+  exit 1
 fi
 
-if [[ -z "$ACCESS_TOKEN" ]]; then
-    echo "[FATAL] ACCESS_TOKEN is empty — check the docker secret github_actions_pat"
-    exit 1
-fi
+API_URL="https://api.github.com"
+RUNNER_NAME="${GH_RUNNER_NAME_PREFIX}-$(hostname)"
 
-echo "[INFO] GitHub access token loaded OK."
-
-# Required: runner name
-if [[ -z "$RUNNER_NAME" ]]; then
-    export RUNNER_NAME="$(hostname)"
-fi
-
-# Required: ephemeral (recommended)
-if [[ -z "$RUNNER_EPHEMERAL" ]]; then
-    export RUNNER_EPHEMERAL="1"
-fi
-
-# Validate repository vs organization mode
-if [[ -z "$ORG_NAME" && -z "$REPO_URL" ]]; then
-    echo "[FATAL] Set either ORG_NAME or REPO_URL."
-    exit 1
-fi
-
-if [[ -n "$ORG_NAME" ]]; then
-    CONFIG_ARGS="--url https://github.com/${ORG_NAME}"
+if [ "$GH_SCOPE" = "org" ]; then
+  RUNNER_URL="https://github.com/${GH_OWNER}"
+  TOKEN_URL="${API_URL}/orgs/${GH_OWNER}/actions/runners/registration-token"
+elif [ "$GH_SCOPE" = "repo" ]; then
+  : "${GH_REPOSITORY:?repo name required when GH_SCOPE=repo}"
+  RUNNER_URL="https://github.com/${GH_OWNER}/${GH_REPOSITORY}"
+  TOKEN_URL="${API_URL}/repos/${GH_OWNER}/${GH_REPOSITORY}/actions/runners/registration-token"
 else
-    CONFIG_ARGS="--url ${REPO_URL}"
+  echo "ERROR: GH_SCOPE must be 'org' or 'repo'"
+  exit 1
 fi
 
-#
-# Configure runner
-#
-echo "[INFO] Configuring runner..."
+echo "Requesting registration token from $TOKEN_URL"
+REG_TOKEN="$(curl -sX POST -H "Authorization: token ${GH_PAT}" \
+  -H "Accept: application/vnd.github+json" \
+  "${TOKEN_URL}" | jq -r '.token')"
 
+if [ -z "$REG_TOKEN" ] || [ "$REG_TOKEN" = "null" ]; then
+  echo "ERROR: Failed to obtain registration token"
+  exit 1
+fi
+
+echo "Configuring runner for ${RUNNER_URL}..."
 ./config.sh \
-    ${CONFIG_ARGS} \
-    --token "${ACCESS_TOKEN}" \
-    --name "${RUNNER_NAME}" \
-    --ephemeral "${RUNNER_EPHEMERAL}" \
-    --labels "${RUNNER_LABELS}" \
-    --work "_work" \
-    --unattended \
-    --replace
+  --unattended \
+  --url "${RUNNER_URL}" \
+  --token "${REG_TOKEN}" \
+  --name "${RUNNER_NAME}" \
+  --labels "${GH_LABELS}" \
+  --runnergroup "${GH_RUNNER_GROUP}" \
+  --replace
 
-echo "[INFO] Runner configured. Starting service..."
-
-# On runner exit, always remove the configuration
 cleanup() {
-    echo "[INFO] Cleaning up runner registration..."
-    ./config.sh remove --token "${ACCESS_TOKEN}" || true
+  echo "Runner exiting, attempting to remove registration..."
+  ./config.sh remove --unattended --token "${REG_TOKEN}" || true
 }
 trap cleanup EXIT
 
-exec ./run.sh
+echo "Starting runner..."
+./run.sh
