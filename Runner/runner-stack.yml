@@ -1,62 +1,134 @@
 version: "3.8"
 
 secrets:
-  gh_pat_org:
+  gh_app_private_key:
     external: true
-  gh_pat_personal:
+  gh_app_id:
+    external: true
+  gh_installation_id_org:
+    external: true
+  gh_installation_id_personal:
     external: true
 
 services:
+  # --- ORG RUNNER(S) ---
   runner_org:
     image: registry.itslit/library/github-runner:latest
-    networks:
-      - default
+    networks: [default]
     deploy:
       mode: replicated
-      replicas: 2
+      replicas: 1   # autoscaler will adjust this
       placement:
-        constraints:
-          - node.role == worker
+        constraints: [node.role == manager]  # needs API access anyway
       restart_policy:
         condition: on-failure
     environment:
       GH_SCOPE: "org"
       GH_OWNER: "ItsLit-Media-and-Development"
-      GH_RUNNER_NAME_PREFIX: "itslit-org"
+      GH_RUNNER_NAME_PREFIX: "itslit"
       GH_LABELS: "self-hosted,swarm,org"
       GH_RUNNER_GROUP: "ContainerRunners"
-      GH_PAT_FILE: "/run/secrets/gh_pat"
+      GH_APP_ID_FILE: "/run/secrets/gh_app_id"
+      GH_INSTALLATION_ID_FILE: "/run/secrets/gh_installation_id_org"
+      GH_APP_PK_FILE: "/run/secrets/gh_app_private_key"
     secrets:
-      - source: gh_pat_org
-        target: gh_pat
+      - source: gh_app_private_key
+        target: gh_app_private_key
+      - source: gh_app_id
+        target: gh_app_id
+      - source: gh_installation_id_org
+        target: gh_installation_id_org
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  # --- PERSONAL RUNNER(S) ---
   runner_personal:
     image: registry.itslit/library/github-runner:latest
-    networks:
-      - default
+    networks: [default]
+    deploy:
+      mode: replicated
+      replicas: 0   # autoscaler will start as needed
+      placement:
+        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+    environment:
+      GH_SCOPE: "repo"
+      GH_OWNER: "MarcTowler"
+      GH_REPOSITORY: "Docker"
+      GH_RUNNER_NAME_PREFIX: "itslit"
+      GH_LABELS: "self-hosted,swarm,personal"
+      GH_APP_PK_FILE: "/run/secrets/gh_app_private_key"
+      GH_APP_ID_FILE: "/run/secrets/gh_app_id"
+      GH_INSTALLATION_ID_FILE: "/run/secrets/gh_installation_id_personal"
+    secrets:
+      - source: gh_app_private_key
+        target: gh_app_private_key
+      - source: gh_app_id
+        target: gh_app_id
+      - source: gh_installation_id_personal
+        target: gh_installation_id_personal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # --- AUTOSCALER SERVICE ---
+  autoscaler:
+    image: registry.itslit/library/runner-autoscaler:latest
+    networks: [default]
     deploy:
       mode: replicated
       replicas: 1
       placement:
-        constraints:
-          - node.role == worker
-      restart_policy:
-        condition: on-failure
+        constraints: [node.role == manager]
     environment:
-      GH_SCOPE: "repo"             # personal repo runner
-      GH_OWNER: "MarcTowler" # <--- change this
-      GH_REPOSITORY: "Docker"   # <--- or template per stack if needed
-      GH_RUNNER_NAME_PREFIX: "itslit-personal"
-      GH_LABELS: "self-hosted,swarm,personal"
-      GH_RUNNER_GROUP: "ContainerRunners"
-      GH_PAT_FILE: "/run/secrets/gh_pat"
+      GITHUB_APP_ID_FILE: "/run/secrets/gh_app_id"
+      GITHUB_APP_PK_FILE: "/run/secrets/gh_app_private_key"
+      GITHUB_INSTALLATION_ID_ORG_FILE: "/run/secrets/gh_installation_id_org"
+      GITHUB_INSTALLATION_ID_PERSONAL_FILE: "/run/secrets/gh_installation_id_personal"
+      SWARM_STACK_NAME: "github-runners"
+      # Tuning:
+      ORG_MIN_RUNNERS: "1"
+      ORG_MAX_RUNNERS: "5"
+      PERSONAL_MIN_RUNNERS: "0"
+      PERSONAL_MAX_RUNNERS: "3"
     secrets:
-      - source: gh_pat_personal
-        target: gh_pat
+      - gh_app_private_key
+      - gh_app_id
+      - gh_installation_id_org
+      - gh_installation_id_personal
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      # Webhook endpoint for workflow_job events, via Traefik
+      - "traefik.enable=true"
+      - "traefik.http.routers.github-webhook.rule=Host(`github-webhook.itslit`)"
+      - "traefik.http.routers.github-webhook.entrypoints=websecure"
+      - "traefik.http.routers.github-webhook.tls=true"
+      - "traefik.http.services.github-webhook.loadbalancer.server.port=8080"
+
+  # --- DASHBOARD SERVICE ---
+  dashboard:
+    image: registry.itslit/library/runner-dashboard:latest
+    networks: [default]
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      GITHUB_APP_ID_FILE: "/run/secrets/gh_app_id"
+      GITHUB_APP_PK_FILE: "/run/secrets/gh_app_private_key"
+      GITHUB_INSTALLATION_ID_ORG_FILE: "/run/secrets/gh_installation_id_org"
+      GITHUB_INSTALLATION_ID_PERSONAL_FILE: "/run/secrets/gh_installation_id_personal"
+    secrets:
+      - gh_app_private_key
+      - gh_app_id
+      - gh_installation_id_org
+      - gh_installation_id_personal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.runners-dashboard.rule=Host(`runners.itslit`)"
+      - "traefik.http.routers.runners-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.runners-dashboard.tls=true"
+      - "traefik.http.services.runners-dashboard.loadbalancer.server.port=8080"
 
 networks:
   default:
