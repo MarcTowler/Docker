@@ -24,7 +24,6 @@ Vagrantfile
 *.ini
 php/*
 node/Socket-Server/*
-.*
 VaultWarden/vw-data/*
 *.txt
 *.hash
@@ -32,3 +31,5 @@ VaultWarden/vw-data/*
 *.key
 *.pem
 Registry/registry/*
+.secret_hashes
+.siteini_checksums

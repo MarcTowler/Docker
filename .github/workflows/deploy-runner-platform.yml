@@ -1,0 +1,45 @@
+name: Build & Deploy Runner Platform
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-images:
+    runs-on: [self-hosted, swarm]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Using internal registry (no login required)
+        run: echo "No authentication required for registry.itslit"
+
+      - name: Build runner image
+        run: |
+          docker build -t registry.itslit/library/github-runner:latest ./Images/Runner
+          docker push registry.itslit/library/github-runner:latest
+
+      - name: Build autoscaler
+        run: |
+          docker build -t registry.itslit/library/runner-autoscaler:latest ./Images/RunnerAutoscaler
+          docker push registry.itslit/library/runner-autoscaler:latest
+
+      # - name: Build dashboard
+      #   run: |
+      #     docker build -t registry.itslit/library/runner-dashboard:latest ./dashboard
+      #     docker push registry.itslit/library/runner-dashboard:latest
+
+  deploy:
+    needs: build-images
+    runs-on: [self-hosted, swarm]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy to Swarm
+        env:
+          BW_PASSWORD: ${{ secrets.VAULTWARDEN_MASTER_PASSWORD }}
+        run: |
+          chmod +x Scripts/deploy-github-runner.sh
+          ./Scripts/deploy-github-runner.sh
