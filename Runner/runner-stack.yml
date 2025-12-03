@@ -47,7 +47,7 @@ services:
     networks: [default]
     deploy:
       mode: replicated
-      replicas: 0   # autoscaler will start as needed
+      replicas: 1   # autoscaler will start as needed
       placement:
         constraints: [node.role == manager]
       restart_policy:
