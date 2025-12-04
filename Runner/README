@@ -1,0 +1,192 @@
+# 🚀 ItsLit GitHub Runner Platform
+
+A fully automated, autoscaling, self-hosted GitHub Actions runner platform running on **Docker Swarm**, featuring:
+
+- GitHub App authentication (secure, no PATs)
+- Autoscaling based on workflow_job events
+- Organizational and personal GitHub runners
+- Internal Docker registry
+- Vaultwarden-managed secrets
+- Discord alerting
+- Automatic runner updates
+- Traefik routing
+
+## 📦 Architecture
+
+```
+                   ┌──────────────────────────┐
+                   │        GitHub App         │
+                   │ (Auth → JWT → InstallTok) │
+                   └───────────────┬──────────┘
+                                   │
+                             GitHub API
+                                   │
+                         Workflow_job Webhooks
+                                   │
+                                   ▼
+               ┌────────────────────────────────────┐
+               │          Autoscaler Service         │
+               │ - Receives GitHub webhooks         │
+               │ - Scales runners up/down           │
+               │ - Auto-updates outdated runners     │
+               │ - Sends Discord alerts              │
+               └─────────────────┬───────────────────┘
+                                 │
+        ┌─────────────── Docker Swarm ───────────────┐
+        │                                             │
+        │  ┌─────────────────────────┐   ┌──────────┐│
+        │  │ Org Runner Instances    │   │Personal   ││
+        │  │ auto-scaled             │   │Runner Inst││
+        │  │                         │   │auto-scaled││
+        │  └─────────────────────────┘   └──────────┘│
+        │                      │                      │
+        └────────────── Docker Socket (shared) ───────┘
+
+               Traefik webhooks: github-webhook.itslit
+```
+
+## 🔐 Secrets (Vaultwarden)
+
+Secrets stored in Docker Swarm:
+
+| Secret | Purpose |
+|--------|---------|
+| `gh_app_private_key` | GitHub App PEM key |
+| `gh_app_id` | GitHub App ID |
+| `gh_installation_id_org` | Installation ID for the org |
+| `gh_installation_id_personal` | Installation ID for the personal repo |
+| `discord_webhook_url` | Discord alert webhook |
+
+Create secrets:
+
+```
+docker secret create gh_app_id gh_app_id.txt
+docker secret create gh_app_private_key key.pem
+docker secret create gh_installation_id_org org_id.txt
+docker secret create gh_installation_id_personal personal_id.txt
+docker secret create discord_webhook_url webhook.txt
+```
+
+## 🏭 Internal Docker Registry
+
+Images stored under:
+
+```
+registry.itslit/library/<image>
+```
+
+Push example:
+
+```
+docker push registry.itslit/library/github-runner:latest
+```
+
+## 🔑 GitHub Authentication
+
+Runners authenticate using a GitHub App via:
+
+1. JWT (signed with GitHub App private key)
+2. Exchange JWT → Installation Access Token
+3. Exchange InstallToken → Runner Registration Token
+
+## 🏃 Runner Image
+
+Build:
+
+```
+docker build -t registry.itslit/library/github-runner:latest ./Images/Runner
+docker push registry.itslit/library/github-runner:latest
+```
+
+Features:
+
+- NodeJS 20
+- PHP + Composer
+- .NET 8 SDK
+- Docker CLI
+- Auto-update GitHub runner binaries
+- Discord notifications
+
+## ⚙️ Runner Stack Deployment
+
+Deploy runners + autoscaler:
+
+```
+docker stack deploy -c Runner/runner-stack.yml github-runners
+```
+
+## 🔁 Autoscaler Capabilities
+
+The autoscaler:
+
+- Listens to GitHub workflow_job events
+- Determines runner demand
+- Scales org & personal pools independently
+- Auto-updates outdated runners
+- Sends Discord alerts
+- Provides `/health` endpoint
+
+Example autoscaler URL:
+
+```
+http://autoscaler:8080/health
+```
+
+## 🔔 Discord Alert System
+
+Alerts include:
+
+- Runner online/offline
+- Scaling operations
+- Outdated runner detection
+- Auto-update success/failure
+- Webhook errors
+
+## 🌐 Traefik Ingress
+
+Webhook endpoint:
+
+```
+https://github-webhook.itslit
+```
+
+## 🚀 Deployment Checklist
+
+1. Build & push images  
+2. Ensure secrets exist in Swarm  
+3. Deploy stack  
+4. Validate services  
+5. Configure GitHub App webhook → `https://github-webhook.itslit`  
+
+## 🐛 Troubleshooting
+
+### Runner exits immediately
+Check:
+
+```
+docker logs <runner-container>
+```
+
+### Permission denied on /var/run/docker.sock
+Runner entrypoint automatically applies:
+
+```
+chmod 660 /var/run/docker.sock
+chown root:docker /var/run/docker.sock
+```
+
+### Autoscaler not receiving webhooks
+Ensure router exists in Traefik dashboard.
+
+### Runner offline in GitHub UI
+Verify installation IDs stored in secrets.
+
+## 📅 Automatic Updates
+
+- Runners check for new GitHub runner versions on boot.
+- Autoscaler detects outdated versions and triggers service recreation.
+- Discord notifications sent for update events.
+
+---
+
+This README documents everything needed to operate and maintain the ItsLit GitHub Runner Platform.

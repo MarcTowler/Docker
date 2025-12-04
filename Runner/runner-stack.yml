@@ -9,12 +9,14 @@ secrets:
     external: true
   gh_installation_id_personal:
     external: true
+  discord_webhook_url:
+    external: true
 
 services:
   # --- ORG RUNNER(S) ---
   runner_org:
     image: registry.itslit/library/github-runner:latest
-    networks: [default]
+    networks: [default, traefik_proxy]
     deploy:
       mode: replicated
       replicas: 1   # autoscaler will adjust this
@@ -31,6 +33,7 @@ services:
       GH_APP_ID_FILE: "/run/secrets/gh_app_id"
       GH_INSTALLATION_ID_FILE: "/run/secrets/gh_installation_id_org"
       GH_APP_PK_FILE: "/run/secrets/gh_app_private_key"
+      DISCORD_WEBHOOK_FILE: "/run/secrets/discord_webhook_url"
     secrets:
       - source: gh_app_private_key
         target: gh_app_private_key
@@ -38,13 +41,15 @@ services:
         target: gh_app_id
       - source: gh_installation_id_org
         target: gh_installation_id_org
+      - source: discord_webhook_url
+        target: discord_webhook_url
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
   # --- PERSONAL RUNNER(S) ---
   runner_personal:
     image: registry.itslit/library/github-runner:latest
-    networks: [default]
+    networks: [default, traefik_proxy]
     deploy:
       mode: replicated
       replicas: 1   # autoscaler will start as needed
@@ -61,6 +66,7 @@ services:
       GH_APP_PK_FILE: "/run/secrets/gh_app_private_key"
       GH_APP_ID_FILE: "/run/secrets/gh_app_id"
       GH_INSTALLATION_ID_FILE: "/run/secrets/gh_installation_id_personal"
+      DISCORD_WEBHOOK_FILE: "/run/secrets/discord_webhook_url"
     secrets:
       - source: gh_app_private_key
         target: gh_app_private_key
@@ -68,13 +74,17 @@ services:
         target: gh_app_id
       - source: gh_installation_id_personal
         target: gh_installation_id_personal
+      - source: discord_webhook_url
+        target: discord_webhook_url
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
   # --- AUTOSCALER SERVICE ---
   autoscaler:
     image: registry.itslit/library/runner-autoscaler:latest
-    networks: [default]
+    networks:
+      - default
+      - traefik_proxy
     deploy:
       mode: replicated
       replicas: 1
@@ -86,50 +96,43 @@ services:
       GITHUB_INSTALLATION_ID_ORG_FILE: "/run/secrets/gh_installation_id_org"
       GITHUB_INSTALLATION_ID_PERSONAL_FILE: "/run/secrets/gh_installation_id_personal"
       SWARM_STACK_NAME: "github-runners"
-      # Tuning:
+
+      ORG_OWNER: "ItsLit-Media-and-Development"
+      PERSONAL_OWNER: "MarcTowler"
+      PERSONAL_REPO: "Docker"
+
       ORG_MIN_RUNNERS: "1"
       ORG_MAX_RUNNERS: "5"
       PERSONAL_MIN_RUNNERS: "1"
       PERSONAL_MAX_RUNNERS: "3"
+      SCAN_INTERVAL_SECONDS: "20"
+      IDLE_SECONDS_BEFORE_SCALE_DOWN: "300"
+
+      AUTO_UPDATE_ORG: "true"
+      AUTO_UPDATE_PERSONAL: "true"
+
+      DISCORD_WEBHOOK_FILE: "/run/secrets/discord_webhook_url"
     secrets:
       - gh_app_private_key
       - gh_app_id
       - gh_installation_id_org
       - gh_installation_id_personal
+      - discord_webhook_url
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
-      # Webhook endpoint for workflow_job events, via Traefik
       - "traefik.enable=true"
+      - "traefik.swarm.network=traefik_proxy"
+
       - "traefik.http.routers.github-webhook.rule=Host(`github-webhook.itslit`)"
       - "traefik.http.routers.github-webhook.entrypoints=websecure"
       - "traefik.http.routers.github-webhook.tls=true"
+
+      - "traefik.http.routers.github-webhook.service=github-webhook"
       - "traefik.http.services.github-webhook.loadbalancer.server.port=8080"
-
-  # --- DASHBOARD SERVICE ---
-  dashboard:
-    image: registry.itslit/library/runner-dashboard:latest
-    networks: [default]
-    deploy:
-      mode: replicated
-      replicas: 1
-    environment:
-      GITHUB_APP_ID_FILE: "/run/secrets/gh_app_id"
-      GITHUB_APP_PK_FILE: "/run/secrets/gh_app_private_key"
-      GITHUB_INSTALLATION_ID_ORG_FILE: "/run/secrets/gh_installation_id_org"
-      GITHUB_INSTALLATION_ID_PERSONAL_FILE: "/run/secrets/gh_installation_id_personal"
-    secrets:
-      - gh_app_private_key
-      - gh_app_id
-      - gh_installation_id_org
-      - gh_installation_id_personal
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.runners-dashboard.rule=Host(`runners.itslit`)"
-      - "traefik.http.routers.runners-dashboard.entrypoints=websecure"
-      - "traefik.http.routers.runners-dashboard.tls=true"
-      - "traefik.http.services.runners-dashboard.loadbalancer.server.port=8080"
-
 networks:
   default:
     driver: overlay
+  traefik_proxy:
+    attachable: true
+    external: true

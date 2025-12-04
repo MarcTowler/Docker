@@ -35,6 +35,17 @@ if [[ -z "$APP_ID" || -z "$INST_ORG" || -z "$INST_PERSONAL" || -z "$APP_PK" ]]; 
   exit 1
 fi
 
+echo "[*] Retrieving Discord webhook..."
+DISCORD_WEBHOOK_URL="$(bw get password 'DISCORD_WEBHOOK_URL' || true)"
+
+docker secret rm discord_webhook_url >/dev/null 2>&1 || true
+
+if [[ -n "$DISCORD_WEBHOOK_URL" ]]; then
+  printf "%s" "$DISCORD_WEBHOOK_URL" | docker secret create discord_webhook_url -
+else
+  echo "[!] Warning: DISCORD_WEBHOOK_URL not set – Discord alerts disabled."
+fi
+
 echo "[*] Recreating Docker secrets..."
 docker secret rm gh_app_id gh_installation_id_org gh_installation_id_personal gh_app_private_key \
   >/dev/null 2>&1 || true
