@@ -89,7 +89,7 @@ services:
       # Tuning:
       ORG_MIN_RUNNERS: "1"
       ORG_MAX_RUNNERS: "5"
-      PERSONAL_MIN_RUNNERS: "0"
+      PERSONAL_MIN_RUNNERS: "1"
       PERSONAL_MAX_RUNNERS: "3"
     secrets:
       - gh_app_private_key

@@ -1,47 +1,79 @@
 FROM ubuntu:22.04
 
-LABEL maintainer="marc@marctowler.co.uk"
-
 ENV DEBIAN_FRONTEND=noninteractive
 
-# ----------------------------------------------------
-# Basic utilities
-# ----------------------------------------------------
+# --------------------------------------------------------
+# System Updates & Basic Tools
+# --------------------------------------------------------
 RUN apt-get update && \
     apt-get install -y \
-      curl wget unzip jq git \
+      curl \
+      wget \
+      jq \
+      git \
+      unzip \
+      apt-transport-https \
       ca-certificates \
+      gnupg \
+      software-properties-common \
       build-essential \
-      libssl-dev libicu-dev zlib1g \
-      python3 python3-pip \
-      && rm -rf /var/lib/apt/lists/*
+      libssl-dev \
+      libicu-dev \
+      zlib1g-dev \
+      python3 \
+      python3-pip && \
+    rm -rf /var/lib/apt/lists/*
 
-# ----------------------------------------------------
+# --------------------------------------------------------
+# Set docker group to match host (IMPORTANT)
+# --------------------------------------------------------
+# Find GID of docker.sock on host: stat -c "%g" /var/run/docker.sock
+# Below assumes typical GID 998. Change if yours differs.
+RUN groupadd -g 998 docker || true
+
+# --------------------------------------------------------
 # Install Docker CLI
-# ----------------------------------------------------
-RUN mkdir -m 0755 -p /etc/apt/keyrings && \
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
-      gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+# --------------------------------------------------------
+RUN install -m 0755 -d /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+        | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
     echo \
-      "deb [arch=$(dpkg --print-architecture) \
+        "deb [arch=$(dpkg --print-architecture) \
         signed-by=/etc/apt/keyrings/docker.gpg] \
         https://download.docker.com/linux/ubuntu \
         $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
-      > /etc/apt/sources.list.d/docker.list && \
-    apt-get update && \
-    apt-get install -y docker-ce-cli && \
+        > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && apt-get install -y docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
 
-# ----------------------------------------------------
-# Install Node LTS
-# ----------------------------------------------------
+# --------------------------------------------------------
+# Install NodeJS LTS
+# --------------------------------------------------------
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-# ----------------------------------------------------
-# Install .NET SDK (example: 8.0)
-# ----------------------------------------------------
+# --------------------------------------------------------
+# Install PHP + Composer
+# --------------------------------------------------------
+RUN apt-get update && \
+    apt-get install -y \
+      php-cli \
+      php-zip \
+      php-curl \
+      php-xml \
+      php-mbstring \
+      php-json \
+      php-gd \
+      php-tokenizer && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -sS https://getcomposer.org/installer \
+    | php -- --install-dir=/usr/local/bin --filename=composer
+
+# --------------------------------------------------------
+# Install .NET SDK
+# --------------------------------------------------------
 RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb && \
@@ -49,42 +81,38 @@ RUN wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-p
     apt-get install -y dotnet-sdk-8.0 && \
     rm -rf /var/lib/apt/lists/*
 
-# ----------------------------------------------------
-# Install PHP + Composer
-# ----------------------------------------------------
-RUN apt-get update && \
-    apt-get install -y \
-      php php-cli php-xml php-mbstring php-zip php-curl php-mysql && \
-    curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php && \
-    php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer && \
-    rm -rf /tmp/composer-setup.php && \
-    rm -rf /var/lib/apt/lists/*
-
-# ----------------------------------------------------
+# --------------------------------------------------------
 # Install GitHub Actions Runner
-# ----------------------------------------------------
+# --------------------------------------------------------
 ARG RUNNER_VERSION="2.319.1"
-RUN mkdir -p /actions-runner && \
-    cd /actions-runner && \
-    curl -fsSL -O https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
+RUN mkdir -p /actions-runner && cd /actions-runner && \
+    curl -fsSL -O \
+      https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
     tar xzf actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
-    ./bin/installdependencies.sh && \
-    rm actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
+    rm actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
+    ./bin/installdependencies.sh
 
-# Add dedicated runner user
+# --------------------------------------------------------
+# Create non-root runner user
+# --------------------------------------------------------
 RUN useradd -m runner && \
+    usermod -aG docker runner && \
     chown -R runner:runner /actions-runner
 
-# Python lib for JWT
+# --------------------------------------------------------
+# Install Python JWT for GitHub App auth
+# --------------------------------------------------------
 RUN pip3 install pyjwt cryptography
 
-# ----------------------------------------------------
-# Copy entrypoint
-# ----------------------------------------------------
+# --------------------------------------------------------
+# Add entrypoint
+# --------------------------------------------------------
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-USER runner
+# --------------------------------------------------------
+# Final container config
+# --------------------------------------------------------
 WORKDIR /actions-runner
-
+USER root
 ENTRYPOINT ["/entrypoint.sh"]
