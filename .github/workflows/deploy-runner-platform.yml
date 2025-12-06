@@ -1,4 +1,4 @@
-name: Build & Deploy Runner Platform
+name: Build and Push Images
 
 on:
   push:
@@ -6,14 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-images:
+  build-runner-images:
     runs-on: [self-hosted, swarm]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Using internal registry (no login required)
-        run: echo "No authentication required for registry.itslit"
 
       - name: Build runner image
         run: |
@@ -25,21 +22,28 @@ jobs:
           docker build -t registry.itslit/library/runner-autoscaler:latest ./Images/RunnerAutoscaler
           docker push registry.itslit/library/runner-autoscaler:latest
 
-      # - name: Build dashboard
-      #   run: |
-      #     docker build -t registry.itslit/library/runner-dashboard:latest ./dashboard
-      #     docker push registry.itslit/library/runner-dashboard:latest
-
-  deploy:
-    needs: build-images
+  build-php-images:
     runs-on: [self-hosted, swarm]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Deploy to Swarm
-        env:
-          BW_PASSWORD: ${{ secrets.VAULTWARDEN_MASTER_PASSWORD }}
+      - name: Build ItsLit API
         run: |
-          chmod +x Scripts/deploy-github-runner.sh
-          ./Scripts/deploy-github-runner.sh
+          docker build -t registry.itslit/library/api:latest ./Images/PHPServer/API
+          docker push registry.itslit/library/api:latest
+
+      - name: Build Game API
+        run: |
+          docker build -t registry.itslit/library/gapi:latest ./Images/PHPServer/gapi
+          docker push registry.itslit/library/gapi:latest
+      
+      - name: Build RPG Site
+        run: |
+          docker build -t registry.itslit/library/rpgsite:latest ./Images/PHPServer/rpg
+          docker push registry.itslit/library/rpgsite:latest
+
+      - name: Build Website
+        run: |
+          docker build -t registry.itslit/library/website:latest ./Images/PHPServer/site
+          docker push registry.itslit/library/website:latest
