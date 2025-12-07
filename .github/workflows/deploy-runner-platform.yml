@@ -41,43 +41,27 @@ jobs:
           # Map the selected target to its Dockerfile and context
           case "${{ github.event.inputs.target }}" in
             "Bind9")
-              echo "dockerfile=Images/bind9/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/bind9" >> "$GITHUB_OUTPUT"
               echo "targets=Bind9" >> "$GITHUB_OUTPUT"
               ;;
             "Github Runners")
-              echo "dockerfile=Images/Runner/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/Runner" >> "$GITHUB_OUTPUT"
               echo "targets=github-runner" >> "$GITHUB_OUTPUT"
               ;;
             "Github Runner Autoscaler")
-              echo "dockerfile=Images/RunnerAutoscaler/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/RunnerAutoscaler" >> "$GITHUB_OUTPUT"
               echo "targets=runner-autoscaler" >> "$GITHUB_OUTPUT"
               ;;
             "ItsLit API")
-              echo "dockerfile=Images/PHPServer/API/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/PHPServer/API" >> "$GITHUB_OUTPUT"
               echo "targets=api" >> "$GITHUB_OUTPUT"
               ;;
             "GAPI")
-              echo "dockerfile=Images/PHPServer/gapi/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/PHPServer/gapi" >> "$GITHUB_OUTPUT"
               echo "targets=gapi" >> "$GITHUB_OUTPUT"
               ;;
             "RPG Website")
-              echo "dockerfile=Images/PHPServer/rpg/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/PHPServer/rpg" >> "$GITHUB_OUTPUT"
               echo "targets=rpgsite" >> "$GITHUB_OUTPUT"
               ;;
             "Website")
-              echo "dockerfile=Images/PHPServer/site/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/PHPServer/site" >> "$GITHUB_OUTPUT"
               echo "targets=site" >> "$GITHUB_OUTPUT"
               ;;
             "Socket Server")
-              echo "dockerfile=Images/node/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/node" >> "$GITHUB_OUTPUT"
               echo "targets=nodews" >> "$GITHUB_OUTPUT"
               ;;
             *)
@@ -96,9 +80,48 @@ jobs:
           for target in ${{ steps.map.outputs.targets }}; do
             echo "Building target: $target"
 
+            case "$target" in
+              "bind9")
+              echo "dockerfile=Images/bind9/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/bind9" >> "$GITHUB_OUTPUT"
+              ;;
+              "github-runner")
+                echo "dockerfile=Images/Runner/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/Runner" >> "$GITHUB_OUTPUT"
+                ;;
+              "runner-autoscaler")
+                echo "dockerfile=Images/RunnerAutoscaler/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/RunnerAutoscaler" >> "$GITHUB_OUTPUT"
+                ;;
+              "api")
+                echo "dockerfile=Images/PHPServer/API/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/PHPServer/API" >> "$GITHUB_OUTPUT"
+                ;;
+              "gapi")
+                echo "dockerfile=Images/PHPServer/gapi/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/PHPServer/gapi" >> "$GITHUB_OUTPUT"
+                ;;
+              "rpgsite")
+                echo "dockerfile=Images/PHPServer/rpg/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/PHPServer/rpg" >> "$GITHUB_OUTPUT"
+                ;;
+              "site")
+                echo "dockerfile=Images/PHPServer/site/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/PHPServer/site" >> "$GITHUB_OUTPUT"
+                ;;
+              "nodews")
+                echo "dockerfile=Images/node/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/node" >> "$GITHUB_OUTPUT"
+                ;;
+            esac
+
             docker build -t registry.itslit/library/$target:latest \
               -f "${{ steps.map.outputs.dockerfile }}" \
               "${{ steps.map.outputs.context }}"
+          done
+      - name: Push Docker image
+        run: |
+          for target in ${{ steps.map.outputs.targets }}; do
             echo "Pushing target: $target"
             docker push registry.itslit/library/$target:latest
           done
