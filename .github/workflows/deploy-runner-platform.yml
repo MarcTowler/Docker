@@ -11,9 +11,10 @@ on:
         options:
           - all
           - --- Utility Images ---
+          - Base Images
+          - Bind9
           - Github Runners
           - Github Runner Autoscaler
-          - Bind9
           - --- Application Images ---
           - ItsLit API
           - GAPI
@@ -58,23 +59,55 @@ jobs:
             "Socket Server")
               echo "targets=nodews" >> "$GITHUB_OUTPUT"
               ;;
+            "Base Images") 
+              echo "targets=base-images" >> "$GITHUB_OUTPUT"
+              ;;
             "all")
-              echo "targets=bind9 github-runner runner-autoscaler api gapi rpgsite site nodews" >> "$GITHUB_OUTPUT"
+              echo "targets=base-images bind9 github-runner runner-autoscaler api gapi rpgsite site nodews" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "Unknown target selected"; exit 1 ;;
           esac
 
-      - name: Show resolved paths
-        run: |
-          echo "Building with:"
-          echo "  Dockerfile: ${{ steps.map.outputs.dockerfile }}"
-          echo "  Context:     ${{ steps.map.outputs.context }}"
-
       # Run the actual docker build
       - name: Build Docker image
         run: |
+          SUMMARY_FILE="summary.txt"
+          echo "| Image | Dockerfile | Context | Tag |" >> $SUMMARY_FILE
+          echo "|-------|------------|---------|-----|" >> $SUMMARY_FILE
+
           for target in ${{ steps.map.outputs.targets }}; do
+
+            # BASE IMAGES LOGIC
+            if [ "$target" = "base-images" ]; then
+              echo "Processing Base Images..."
+
+              declare -A base_images=(
+                ["php"]="php:8.1-apache"
+                ["node"]="node:current-alpine"
+                ["composer"]="composer:2.4"
+                ["mysql"]="mysql:8.0"
+              )
+
+              for name in "${!base_images[@]}"; do
+                source_tag="${base_images[$name]}"
+
+                echo "Pulling $source_tag..."
+                docker pull $source_tag
+
+                dest="registry.itslit/$name:latest"
+                echo "Retagging to $dest"
+                docker tag $source_tag $dest
+
+                echo "Pushing $dest"
+                docker push $dest
+
+                echo "| $name | (base-image) | DockerHub | $dest |" >> $SUMMARY_FILE
+              done
+
+              continue
+            fi
+            
             echo "Building target: $target"
 
             case "$target" in
@@ -115,13 +148,21 @@ jobs:
             echo "Using Dockerfile: $dockerfile"
             echo "Using Context: $context"
 
-            docker build -t registry.itslit/library/$target:latest \
-              -f "$dockerfile" \
-              "$context"
+            tag="registry.itslit/library/$target:latest"
+
+            echo "Building $target..."
+            docker build -t $tag -f "$dockerfile" "$context"
+            docker push $tag
+
+            echo "| $target | $dockerfile | $context | $tag |" >> $SUMMARY_FILE
           done
-      - name: Push Docker image
+
+          echo "summary-path=$SUMMARY_FILE" >> "$GITHUB_OUTPUT"
+
+      # ───────────────────────────────────────────────
+      # Publish summary table to GitHub Actions UI
+      # ───────────────────────────────────────────────
+      - name: Build Summary
         run: |
-          for target in ${{ steps.map.outputs.targets }}; do
-            echo "Pushing target: $target"
-            docker push registry.itslit/library/$target:latest
-          done
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          cat "${{ steps.build.outputs.summary-path }}" >> $GITHUB_STEP_SUMMARY
