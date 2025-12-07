@@ -79,42 +79,42 @@ jobs:
 
             case "$target" in
               "bind9")
-                echo "dockerfile=Images/bind9/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/bind9" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/bind9/dockerfile"
+                context="Images/bind9"
                 ;;
               "github-runner")
-                echo "dockerfile=Images/Runner/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/Runner" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/Runner/dockerfile"
+                context="Images/Runner"
                 ;;
               "runner-autoscaler")
-                echo "dockerfile=Images/RunnerAutoscaler/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/RunnerAutoscaler" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/RunnerAutoscaler/dockerfile"
+                context="Images/RunnerAutoscaler"
                 ;;
               "api")
-                echo "dockerfile=Images/PHPServer/API/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/PHPServer/API" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/PHPServer/API/dockerfile"
+                context="Images/PHPServer/API"
                 ;;
               "gapi")
-                echo "dockerfile=Images/PHPServer/gapi/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/PHPServer/gapi" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/PHPServer/gapi/dockerfile"
+                context="Images/PHPServer/gapi"
                 ;;
               "rpgsite")
-                echo "dockerfile=Images/PHPServer/rpg/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/PHPServer/rpg" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/PHPServer/rpg/dockerfile"
+                context="Images/PHPServer/rpg"
                 ;;
               "site")
-                echo "dockerfile=Images/PHPServer/site/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/PHPServer/site" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/PHPServer/site/dockerfile"
+                context="Images/PHPServer/site"
                 ;;
               "nodews")
-                echo "dockerfile=Images/node/dockerfile" >> "$GITHUB_OUTPUT"
-                echo "context=Images/node" >> "$GITHUB_OUTPUT"
+                dockerfile="Images/node/dockerfile"
+                context="Images/node"
                 ;;
             esac
 
             echo "Using Dockerfile: $dockerfile"
             echo "Using Context: $context"
-            
+
             docker build -t registry.itslit/library/$target:latest \
               -f "$dockerfile" \
               "$context"
