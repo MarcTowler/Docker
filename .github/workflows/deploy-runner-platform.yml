@@ -1,49 +1,66 @@
 name: Build and Push Images
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      target:
+        description: "What Image to build"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - github-runner
+          - Runner Autoscaler
+          - Bind9
+          - API
+          - gapi
+          - rpgsite
+          - Website
+          - Socket Server
 
 jobs:
-  build-runner-images:
+  build-image:
     runs-on: [self-hosted, swarm]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Build runner image
+      # Map the readable name to the actual Dockerfile path
+      - name: Map selected target to Dockerfile path
+        id: map
         run: |
-          docker build -t registry.itslit/library/github-runner:latest ./Images/Runner
-          docker push registry.itslit/library/github-runner:latest
+          case "${{ github.event.inputs.target }}" in
+            "API")
+              echo "dockerfile=Images/PHPServer/API/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "Images/PHPServer/API" >> "$GITHUB_OUTPUT"
+              ;;
+            "gapi")
+              echo "dockerfile=Images/PHPServer/gapi/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/PHPServer/gapi" >> "$GITHUB_OUTPUT"
+              ;;
+            "rpgsite")
+              echo "dockerfile=Images/PHPServer/site/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/PHPServer/site" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unknown target selected"; exit 1 ;;
+          esac
 
-      - name: Build autoscaler
+      - name: Show resolved paths
         run: |
-          docker build -t registry.itslit/library/runner-autoscaler:latest ./Images/RunnerAutoscaler
-          docker push registry.itslit/library/runner-autoscaler:latest
+          echo "Building with:"
+          echo "  Dockerfile: ${{ steps.map.outputs.dockerfile }}"
+          echo "  Context:     ${{ steps.map.outputs.context }}"
 
-  build-php-images:
-    runs-on: [self-hosted, swarm]
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      # Run the actual docker build
+      - name: Build Docker image
+        run: |
+          docker build -t registry.itslit/library/${{ github.event.inputs.target | toLowerCase }}:latest \
+            -f "${{ steps.map.outputs.dockerfile }}" \
+            "${{ steps.map.outputs.context }}"
 
-      - name: Build ItsLit API
-        run: |
-          docker build -t registry.itslit/library/api:latest ./Images/PHPServer/API
-          docker push registry.itslit/library/api:latest
-
-      - name: Build Game API
-        run: |
-          docker build -t registry.itslit/library/gapi:latest ./Images/PHPServer/gapi
-          docker push registry.itslit/library/gapi:latest
-      
-      - name: Build RPG Site
-        run: |
-          docker build -t registry.itslit/library/rpgsite:latest ./Images/PHPServer/rpg
-          docker push registry.itslit/library/rpgsite:latest
-
-      - name: Build Website
-        run: |
-          docker build -t registry.itslit/library/website:latest ./Images/PHPServer/site
-          docker push registry.itslit/library/website:latest
+      # - name: Build Website
+      #   run: |
+      #     docker build -t registry.itslit/library/website:latest ./Images/PHPServer/site
+      #     docker push registry.itslit/library/website:latest
