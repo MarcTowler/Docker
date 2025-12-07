@@ -31,6 +31,22 @@ jobs:
         id: map
         run: |
           case "${{ github.event.inputs.target }}" in
+            "--- Utility Images ---")
+              ;;
+            "Bind9")
+              echo "dockerfile=Images/bind9/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/bind9" >> "$GITHUB_OUTPUT"
+              ;;
+            "github-runner")
+              echo "dockerfile=Images/Runner/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/Runner" >> "$GITHUB_OUTPUT"
+              ;;
+            "runner-autoscaler")
+              echo "dockerfile=Images/RunnerAutoscaler/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/RunnerAutoscaler" >> "$GITHUB_OUTPUT"
+              ;;
+            "--- Application Images ---")
+              ;;
             "api")
               echo "dockerfile=Images/PHPServer/API/dockerfile" >> "$GITHUB_OUTPUT"
               echo "context=Images/PHPServer/API" >> "$GITHUB_OUTPUT"
@@ -40,8 +56,16 @@ jobs:
               echo "context=Images/PHPServer/gapi" >> "$GITHUB_OUTPUT"
               ;;
             "rpgsite")
+              echo "dockerfile=Images/PHPServer/rpg/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/PHPServer/rpg" >> "$GITHUB_OUTPUT"
+              ;;
+            "website")
               echo "dockerfile=Images/PHPServer/site/dockerfile" >> "$GITHUB_OUTPUT"
               echo "context=Images/PHPServer/site" >> "$GITHUB_OUTPUT"
+              ;;
+            "nodews")
+              echo "dockerfile=Images/node/dockerfile" >> "$GITHUB_OUTPUT"
+              echo "context=Images/node" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "Unknown target selected"; exit 1 ;;
@@ -59,8 +83,8 @@ jobs:
           docker build -t registry.itslit/library/${{ github.event.inputs.target }}:latest \
             -f "${{ steps.map.outputs.dockerfile }}" \
             "${{ steps.map.outputs.context }}"
-
-      # - name: Build Website
-      #   run: |
-      #     docker build -t registry.itslit/library/website:latest ./Images/PHPServer/site
-      #     docker push registry.itslit/library/website:latest
+      
+      # Update the Registry with the new image
+      - name: Push Docker image
+        run: |
+          docker push registry.itslit/library/${{ github.event.inputs.target }}:latest
