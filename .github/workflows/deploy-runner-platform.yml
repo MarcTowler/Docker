@@ -71,6 +71,7 @@ jobs:
 
       # Run the actual docker build
       - name: Build Docker image
+        id: build
         run: |
           SUMMARY_FILE="summary.txt"
           echo "| Image | Dockerfile | Context | Tag |" >> $SUMMARY_FILE
