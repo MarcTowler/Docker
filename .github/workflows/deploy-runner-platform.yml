@@ -33,7 +33,7 @@ jobs:
           case "${{ github.event.inputs.target }}" in
             "api")
               echo "dockerfile=Images/PHPServer/API/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "Images/PHPServer/API" >> "$GITHUB_OUTPUT"
+              echo "context=Images/PHPServer/API" >> "$GITHUB_OUTPUT"
               ;;
             "gapi")
               echo "dockerfile=Images/PHPServer/gapi/dockerfile" >> "$GITHUB_OUTPUT"
