@@ -32,12 +32,6 @@ jobs:
       - name: Map selected target to Dockerfile path
         id: map
         run: |
-          # Check to see if "all" was selected
-          if [ "${{ github.event.inputs.target }}" = "all" ]; then
-            echo "targets=bind9 github-runner runner-autoscaler api gapi rpgsite site nodews" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
           # Map the selected target to its Dockerfile and context
           case "${{ github.event.inputs.target }}" in
             "Bind9")
@@ -64,6 +58,9 @@ jobs:
             "Socket Server")
               echo "targets=nodews" >> "$GITHUB_OUTPUT"
               ;;
+            "all")
+              echo "targets=bind9 github-runner runner-autoscaler api gapi rpgsite site nodews" >> "$GITHUB_OUTPUT"
+              ;;
             *)
               echo "Unknown target selected"; exit 1 ;;
           esac
@@ -82,9 +79,9 @@ jobs:
 
             case "$target" in
               "bind9")
-              echo "dockerfile=Images/bind9/dockerfile" >> "$GITHUB_OUTPUT"
-              echo "context=Images/bind9" >> "$GITHUB_OUTPUT"
-              ;;
+                echo "dockerfile=Images/bind9/dockerfile" >> "$GITHUB_OUTPUT"
+                echo "context=Images/bind9" >> "$GITHUB_OUTPUT"
+                ;;
               "github-runner")
                 echo "dockerfile=Images/Runner/dockerfile" >> "$GITHUB_OUTPUT"
                 echo "context=Images/Runner" >> "$GITHUB_OUTPUT"
@@ -115,6 +112,9 @@ jobs:
                 ;;
             esac
 
+            echo "Using Dockerfile: $dockerfile"
+            echo "Using Context: $context"
+            
             docker build -t registry.itslit/library/$target:latest \
               -f "$dockerfile" \
               "$context"
