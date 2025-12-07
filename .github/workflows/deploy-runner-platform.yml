@@ -116,8 +116,8 @@ jobs:
             esac
 
             docker build -t registry.itslit/library/$target:latest \
-              -f "${{ steps.map.outputs.dockerfile }}" \
-              "${{ steps.map.outputs.context }}"
+              -f "$dockerfile" \
+              "$context"
           done
       - name: Push Docker image
         run: |
