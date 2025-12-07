@@ -34,7 +34,7 @@ jobs:
         run: |
           # Check to see if "all" was selected
           if [ "${{ github.event.inputs.target }}" = "all" ]; then
-            echo "targets=Bind9,github-runner,runner-autoscaler,api,gapi,rpgsite,website,nodews" >> "$GITHUB_OUTPUT"
+            echo "targets=Bind9 github-runner runner-autoscaler api gapi rpgsite website nodews" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
