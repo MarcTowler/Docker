@@ -96,7 +96,7 @@ jobs:
                 echo "Pulling $source_tag..."
                 docker pull $source_tag
 
-                dest="registry.itslit/$name:latest"
+                dest="registry.itslit/$name:${source_tag#*:}"
                 echo "Retagging to $dest"
                 docker tag $source_tag $dest
 
