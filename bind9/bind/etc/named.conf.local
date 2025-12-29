@@ -1,14 +1,30 @@
+//
+// Do any local configuration here
+//
+
+// Consider adding the 1918 zones here, if they are not used in your
+// organization
+//include "/etc/bind/zones.rfc1918";
+
+// Define your internal domain zone
 zone "itslit" {
     type master;
     file "/etc/bind/db.itslit";
-    allow-update { any; };
+    allow-update { none; };
 };
 
+// Optional: Add a reverse zone for your internal network (adjust subnet as needed)
+zone "1.168.192.in-addr.arpa" {
+    type master;
+    file "/etc/bind/db.192.168.1";
+    allow-update { none; };
+};
+
+// Forward all queries not in our zones to public DNS
 options {
-    directory "/var/cache/bind";
-    allow-query { any; };
-    recursion yes;
-    forwarders { 1.1.1.1; 8.8.8.8; };
-    listen-on { any; };
-    dnssec-validation no;
+    forwarders {
+        8.8.8.8;
+        8.8.4.4;
+    };
+    forward only;
 };

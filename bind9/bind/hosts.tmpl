@@ -1,6 +1,0 @@
-{{ range $container := where . "State.Running" true }}
-{{ $name := (replace (index $container.Labels "traefik.http.routers.default.rule") "Host(`" "" ) | replace "`)" "" }}
-{{ if $name }}
-{{ $name }} 192.168.1.233
-{{ end }}
-{{ end }}

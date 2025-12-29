@@ -3,13 +3,22 @@ version: "3.8"
 services:
   bind9:
     image: internetsystemsconsortium/bind9:9.18
+    hostname: ns1.itslit
     networks:
-      - traefik-public
+      - traefik_proxy
     ports:
-      - "53:53/udp"
-      - "53:53/tcp"
+      - target: 53
+        published: 53
+        protocol: udp
+        mode: host
+      - target: 53
+        published: 53
+        protocol: tcp
+        mode: host
     volumes:
-      - bind_data:/etc/bind
+      - bind_etc:/etc/bind
+      - bind_cache:/var/cache/bind
+      - bind_lib:/var/lib/bind
     environment:
       - TZ=UTC
     configs:
@@ -18,37 +27,31 @@ services:
       - source: zone_file
         target: /etc/bind/db.itslit
     deploy:
+      mode: global
       placement:
         constraints: [node.role == manager]
-
-  bind-updater:
-    image: python:3.12-slim
-    command: >
-      bash -c "pip install --no-cache-dir docker && python /scripts/docker_bind_updater.py"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - bind_data:/etc/bind
-      - ./bind/docker_bind_updater.py:/scripts/docker_bind_updater.py
-    networks:
-      - traefik-public
-    configs:
-      - source: updater_script
-        target: /scripts/docker_bind_updater.py
-    deploy:
-      placement:
-        constraints: [node.role == manager]
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+      update_config:
+        parallelism: 1
+        delay: 10s
 
 configs:
   named_conf_local:
     file: ./bind/etc/named.conf.local
   zone_file:
     file: ./bind/etc/db.itslit
-  updater_script:
-    file: ./bind/docker_bind_updater.py
 
 volumes:
-  bind_data:
+  bind_etc:
+    driver: local
+  bind_cache:
+    driver: local
+  bind_lib:
+    driver: local
 
 networks:
-  traefik-public:
+  traefik_proxy:
     external: true
