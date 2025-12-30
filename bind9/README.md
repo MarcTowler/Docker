@@ -9,6 +9,15 @@ BIND9 is a widely-used, open-source DNS server. This setup configures it to:
 - Serve your internal domain (`itslit`)
 - Provide DNS resolution for your services and nodes
 - Use Docker Swarm secrets/configs for configuration management
+- **Automatically register new Docker services via DNS sync** ✨
+
+## Quick Features
+
+- ✅ **Automatic Service Registration** - New Docker services are automatically added to DNS
+- ✅ **Zero Manual Configuration** - Just deploy a service, DNS handles the rest
+- ✅ **Dynamic Updates** - Service changes are reflected immediately in DNS
+- ✅ **Fallback DNS** - External queries forwarded to public DNS
+- ✅ **High Availability** - Restart policies ensure continuous operation
 
 ## Prerequisites
 
@@ -52,14 +61,27 @@ If it doesn't exist, create it:
 docker network create -d overlay traefik_proxy
 ```
 
-### 4. Deploy BIND9
+### 4. Build the DNS Sync Image
+
+The automatic service registration requires building the dns-sync container image:
+
+```bash
+cd ~/Docker/bind9
+docker build -f Dockerfile.dns-sync -t dns-sync:latest .
+```
+
+### 5. Deploy BIND9 Stack
 
 ```bash
 cd ~/Docker/bind9
 docker stack deploy -c bind9-stack.yml bind9
 ```
 
-### 5. Verify Deployment
+This deploys both:
+- **bind9** - BIND9 DNS server
+- **dns-sync** - Automatic Docker service discovery
+
+### 6. Verify Deployment
 
 ```bash
 # Check service status
@@ -67,10 +89,44 @@ docker service ls | grep bind9
 
 # Check running tasks
 docker service ps bind9_bind9
+docker service ps bind9_dns-sync
 
 # View logs
 docker service logs bind9_bind9
+docker service logs bind9_dns-sync
 ```
+
+## Automatic Service Registration (NEW!)
+
+Your services are now automatically registered in DNS! No manual configuration needed.
+
+### How It Works
+
+1. You deploy a service: `docker service create my-api nginx`
+2. The `dns-sync` service detects the event in real-time
+3. Automatically updates BIND9 with a DNS record: `my-api.itslit`
+4. Other services and clients can immediately query the service by name
+
+### Quick Example
+
+```bash
+# Deploy a test service
+docker service create --name web-app --network traefik_proxy nginx:latest
+
+# Watch the logs - see the automatic registration
+docker service logs -f bind9_dns-sync
+
+# Query the new service
+nslookup web-app 192.168.1.50
+```
+
+### Documentation
+
+See [DNS-SYNC.md](DNS-SYNC.md) for complete documentation on automatic service registration, including:
+- Testing and verification
+- Configuration options
+- Troubleshooting
+- Advanced usage
 
 ## Configuration Files
 
